@@ -1,0 +1,141 @@
+<div class="page-header">
+  <h2><i class="fas fa-calendar-alt"></i> Appointments</h2>
+  <p>Schedule and manage patient appointments</p>
+</div>
+
+<!-- Date Range Filter -->
+<div class="card mb-3">
+  <div class="flex-between">
+    <div class="flex gap-1">
+      <input type="date" id="startDate" class="form-control" style="width: auto;">
+      <input type="date" id="endDate" class="form-control" style="width: auto;">
+      <button class="btn btn-secondary" onclick="loadAppointments()">
+        <i class="fas fa-filter"></i> Filter
+      </button>
+      <button class="btn btn-secondary" onclick="loadToday()">
+        <i class="fas fa-calendar-day"></i> Today
+      </button>
+    </div>
+    <button class="btn btn-primary" onclick="showAddModal()">
+      <i class="fas fa-plus"></i> New Appointment
+    </button>
+  </div>
+</div>
+
+<!-- Appointments Table -->
+<div class="card">
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Date & Time</th>
+          <th>Patient</th>
+          <th>Owner</th>
+          <th>Reason</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="appointmentsTable">
+        <tr>
+          <td colspan="6" class="text-center">
+            <div class="spinner"></div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  async function loadAppointments() {
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    const tbody = document.getElementById('appointmentsTable');
+
+    let url = '/api/appointments';
+    if (startDate && endDate) {
+      url += `?startDate=${startDate}&endDate=${endDate}`;
+    }
+
+    try {
+      const response = await fetch(url);
+      const result = await response.json();
+
+      if (result.success) {
+        if (result.data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="text-center">No appointments found</td></tr>';
+        } else {
+          tbody.innerHTML = result.data.map(apt => {
+            const dateTime = new Date(apt.dateTime);
+            const statusBadge = apt.status === 'Completed' ? 'badge-success' :
+                               apt.status === 'Canceled' ? 'badge-danger' : 'badge-info';
+            return `
+              <tr>
+                <td>${dateTime.toLocaleString()}</td>
+                <td>${apt.patient.name}</td>
+                <td>${apt.patient.client.name}</td>
+                <td>${apt.reason || '-'}</td>
+                <td><span class="badge ${statusBadge}">${apt.status}</span></td>
+                <td>
+                  <button class="btn btn-sm btn-secondary" onclick="editAppointment(${apt.id})">
+                    <i class="fas fa-edit"></i> Edit
+                  </button>
+                  <button class="btn btn-sm btn-danger" onclick="deleteAppointment(${apt.id})">
+                    <i class="fas fa-trash"></i> Delete
+                  </button>
+                </td>
+              </tr>
+            `;
+          }).join('');
+        }
+      }
+    } catch (error) {
+      console.error('Error loading appointments:', error);
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center">Error loading appointments</td></tr>';
+    }
+  }
+
+  function loadToday() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('startDate').value = today;
+    document.getElementById('endDate').value = today;
+    loadAppointments();
+  }
+
+  function showAddModal() {
+    alert('Add Appointment form - Select patient, date/time, and reason');
+  }
+
+  function editAppointment(id) {
+    alert(`Edit appointment ${id}`);
+  }
+
+  async function deleteAppointment(id) {
+    if (!confirm('Are you sure you want to delete this appointment?')) return;
+
+    try {
+      const response = await fetch(`/api/appointments/${id}`, { method: 'DELETE' });
+      const result = await response.json();
+
+      if (result.success) {
+        alert(result.message);
+        loadAppointments();
+      } else {
+        alert('Error: ' + result.message);
+      }
+    } catch (error) {
+      console.error('Error deleting appointment:', error);
+      alert('Error deleting appointment');
+    }
+  }
+
+  // Set default dates to current month
+  const now = new Date();
+  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  document.getElementById('startDate').value = firstDay.toISOString().split('T')[0];
+  document.getElementById('endDate').value = lastDay.toISOString().split('T')[0];
+
+  loadAppointments();
+</script>

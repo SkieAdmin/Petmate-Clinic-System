@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - Veterinary Clinic</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <h1><i class="fas fa-paw"></i> Vet Clinic</h1>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/" class="nav-item <%= title === 'Dashboard' ? 'active' : '' %>">
+          <i class="fas fa-home"></i> Dashboard
+        </a>
+        <a href="/clients" class="nav-item <%= title === 'Clients' ? 'active' : '' %>">
+          <i class="fas fa-users"></i> Clients
+        </a>
+        <a href="/patients" class="nav-item <%= title === 'Patients' ? 'active' : '' %>">
+          <i class="fas fa-paw"></i> Patients
+        </a>
+        <a href="/appointments" class="nav-item <%= title === 'Appointments' ? 'active' : '' %>">
+          <i class="fas fa-calendar-alt"></i> Appointments
+        </a>
+        <a href="/inventory" class="nav-item <%= title === 'Inventory' ? 'active' : '' %>">
+          <i class="fas fa-boxes"></i> Inventory
+        </a>
+        <a href="/invoices" class="nav-item <%= title === 'Invoices' ? 'active' : '' %>">
+          <i class="fas fa-file-invoice-dollar"></i> Invoices
+        </a>
+        <a href="/reports" class="nav-item <%= title === 'Reports' ? 'active' : '' %>">
+          <i class="fas fa-chart-bar"></i> Reports
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Mobile Menu Toggle -->
+    <button class="menu-toggle" id="menuToggle">
+      <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <%- body %>
+    </main>
+  </div>
+
+  <script>
+    // Mobile menu toggle
+    const menuToggle = document.getElementById('menuToggle');
+    const sidebar = document.getElementById('sidebar');
+
+    menuToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('active');
+    });
+
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', (e) => {
+      if (window.innerWidth <= 768) {
+        if (!sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
+          sidebar.classList.remove('active');
+        }
+      }
+    });
+  </script>
+</body>
+</html>

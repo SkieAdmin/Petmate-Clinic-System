@@ -1,0 +1,307 @@
+VETERINARY CLINIC MANAGEMENT SYSTEM - FILE STRUCTURE
+====================================================
+
+vet-clinic-app/
+│
+├── 📄 package.json                    # Project dependencies and scripts
+├── 📄 package-lock.json               # Locked dependency versions
+├── 📄 .env                            # Environment variables (DATABASE_URL, PORT)
+├── 📄 .env.example                    # Template for environment variables
+├── 📄 .gitignore                      # Git ignore rules
+│
+├── 📚 README.md                       # Main project documentation
+├── 📚 QUICK_START.md                  # Fast setup guide
+├── 📚 SETUP_GUIDE.md                  # Detailed installation guide
+├── 📚 API_DOCUMENTATION.md            # Complete API reference
+├── 📚 PROJECT_SUMMARY.md              # Project overview and status
+├── 📚 FILE_STRUCTURE.txt              # This file
+│
+├── 📂 prisma/                         # Database configuration
+│   ├── 📄 schema.prisma               # Database schema (7 models)
+│   ├── 📄 seed.js                     # Sample data script
+│   └── 📂 migrations/                 # Database migration history
+│       └── ...migration files
+│
+├── 📂 src/                            # Source code
+│   │
+│   ├── 📄 server.js                   # Main Express application entry point
+│   │
+│   ├── 📂 controllers/                # Request handlers (API logic)
+│   │   ├── 📄 clients.controller.js       # Client CRUD operations
+│   │   ├── 📄 patients.controller.js      # Patient CRUD operations
+│   │   ├── 📄 appointments.controller.js  # Appointment management
+│   │   ├── 📄 items.controller.js         # Inventory CRUD operations
+│   │   ├── 📄 invoices.controller.js      # Billing & PDF generation
+│   │   └── 📄 reports.controller.js       # Statistics and reports
+│   │
+│   ├── 📂 services/                   # Business logic layer
+│   │   ├── 📄 clients.service.js          # Client data operations
+│   │   ├── 📄 patients.service.js         # Patient data operations
+│   │   ├── 📄 appointments.service.js     # Appointment data operations
+│   │   ├── 📄 items.service.js            # Inventory data operations
+│   │   ├── 📄 invoices.service.js         # Invoice data & calculations
+│   │   └── 📄 reports.service.js          # Report aggregations
+│   │
+│   ├── 📂 routes/                     # API route definitions
+│   │   ├── 📄 clients.routes.js           # /api/clients routes
+│   │   ├── 📄 patients.routes.js          # /api/patients routes
+│   │   ├── 📄 appointments.routes.js      # /api/appointments routes
+│   │   ├── 📄 items.routes.js             # /api/items routes
+│   │   ├── 📄 invoices.routes.js          # /api/invoices routes
+│   │   └── 📄 reports.routes.js           # /api/reports routes
+│   │
+│   ├── 📂 middlewares/                # Express middlewares
+│   │   └── 📄 errorHandler.js             # Global error handling
+│   │
+│   ├── 📂 utils/                      # Utility functions
+│   │   ├── 📄 prisma.js                   # Prisma Client singleton
+│   │   └── 📄 asyncHandler.js             # Async error wrapper
+│   │
+│   └── 📂 views/                      # EJS templates (Frontend)
+│       ├── 📄 layout.ejs                  # Main layout with sidebar
+│       ├── 📄 index.ejs                   # Dashboard page
+│       ├── 📄 clients.ejs                 # Client management page
+│       ├── 📄 patients.ejs                # Patient management page
+│       ├── 📄 appointments.ejs            # Appointments calendar page
+│       ├── 📄 inventory.ejs               # Inventory management page
+│       ├── 📄 invoices.ejs                # Invoice management page
+│       └── 📄 reports.ejs                 # Reports & analytics page
+│
+└── 📂 public/                         # Static assets
+    └── 📂 css/
+        └── 📄 style.css                   # Green & white theme styles
+
+
+DATABASE SCHEMA (prisma/schema.prisma)
+=======================================
+
+┌─────────────┐         ┌──────────────┐
+│   Client    │1      ∞│   Patient    │
+│─────────────│◄────────│──────────────│
+│ id          │         │ id           │
+│ name        │         │ name         │
+│ phone       │         │ species      │
+│ email       │         │ breed        │
+│ address     │         │ birthDate    │
+│             │         │ notes        │
+│             │         │ clientId     │
+└─────────────┘         └──────────────┘
+       │1                       │1
+       │                        │
+       │                        │
+       │∞                       │∞
+┌─────────────┐         ┌──────────────┐
+│   Invoice   │         │ Appointment  │
+│─────────────│         │──────────────│
+│ id          │         │ id           │
+│ invoiceNum  │         │ dateTime     │
+│ date        │         │ reason       │
+│ totalAmount │         │ status       │
+│ status      │         │ notes        │
+│ notes       │         │ patientId    │
+│ clientId    │         │ invoiceId    │
+└─────────────┘         └──────────────┘
+       │1
+       │
+       │∞
+┌──────────────┐
+│ InvoiceItem  │
+│──────────────│
+│ id           │
+│ quantity     │
+│ priceEach    │
+│ subtotal     │
+│ invoiceId    │
+│ itemId       │
+└──────────────┘
+       │∞
+       │
+       │1
+┌──────────────┐
+│     Item     │
+│──────────────│
+│ id           │
+│ name         │
+│ description  │
+│ itemType     │
+│ quantity     │
+│ minQuantity  │
+│ price        │
+└──────────────┘
+
+
+API ENDPOINTS STRUCTURE
+========================
+
+/api
+├── /clients
+│   ├── GET    /              # List all clients (with search)
+│   ├── GET    /:id           # Get specific client
+│   ├── POST   /              # Create new client
+│   ├── PUT    /:id           # Update client
+│   └── DELETE /:id           # Delete client
+│
+├── /patients
+│   ├── GET    /              # List all patients (with search/filter)
+│   ├── GET    /:id           # Get specific patient
+│   ├── POST   /              # Create new patient
+│   ├── PUT    /:id           # Update patient
+│   └── DELETE /:id           # Delete patient
+│
+├── /appointments
+│   ├── GET    /              # List all appointments
+│   ├── GET    /calendar      # Get by date range (calendar view)
+│   ├── GET    /today         # Get today's appointments
+│   ├── GET    /:id           # Get specific appointment
+│   ├── POST   /              # Create new appointment
+│   ├── PUT    /:id           # Update appointment
+│   └── DELETE /:id           # Delete appointment
+│
+├── /items
+│   ├── GET    /              # List all items (with search)
+│   ├── GET    /low-stock     # Get low stock items
+│   ├── GET    /:id           # Get specific item
+│   ├── POST   /              # Create new item
+│   ├── PUT    /:id           # Update item
+│   ├── PATCH  /:id/quantity  # Update quantity only
+│   └── DELETE /:id           # Delete item
+│
+├── /invoices
+│   ├── GET    /              # List all invoices (with filters)
+│   ├── GET    /:id           # Get specific invoice
+│   ├── GET    /:id/pdf       # Download invoice as PDF
+│   ├── POST   /              # Create new invoice
+│   ├── PUT    /:id           # Update invoice
+│   └── DELETE /:id           # Delete invoice
+│
+└── /reports
+    ├── GET    /summary           # Dashboard summary stats
+    ├── GET    /revenue           # Revenue report (date range)
+    ├── GET    /appointments      # Appointment statistics
+    └── GET    /top-clients       # Top clients by revenue
+
+
+FRONTEND PAGES STRUCTURE
+=========================
+
+Web Routes (EJS Views)
+├── GET /                     → index.ejs (Dashboard)
+│   └── Shows: Stats, today's appointments, alerts
+│
+├── GET /clients              → clients.ejs
+│   └── Shows: Client list, search, add/edit/delete
+│
+├── GET /patients             → patients.ejs
+│   └── Shows: Patient list, search, view/delete
+│
+├── GET /appointments         → appointments.ejs
+│   └── Shows: Calendar view, date filters, CRUD
+│
+├── GET /inventory            → inventory.ejs
+│   └── Shows: Item list, low-stock alerts, CRUD
+│
+├── GET /invoices             → invoices.ejs
+│   └── Shows: Invoice list, PDF download, create
+│
+└── GET /reports              → reports.ejs
+    └── Shows: Statistics, charts, revenue reports
+
+
+KEY CONFIGURATION FILES
+=======================
+
+.env (Environment Variables)
+├── DATABASE_URL              # MySQL connection string
+├── PORT                      # Server port (default: 3000)
+└── NODE_ENV                  # development/production
+
+package.json (Dependencies)
+├── @prisma/client            # ORM client
+├── express                   # Web framework
+├── ejs                       # Template engine
+├── express-ejs-layouts       # Layout support
+├── cors                      # CORS middleware
+├── dotenv                    # Environment variables
+├── pdfkit                    # PDF generation
+├── prisma                    # ORM (devDependency)
+└── nodemon                   # Auto-restart (devDependency)
+
+
+NPM SCRIPTS
+===========
+
+npm start                     # Start production server
+npm run dev                   # Start development server (with nodemon)
+npm run prisma:generate       # Generate Prisma Client
+npm run prisma:migrate        # Run database migrations
+npm run prisma:seed           # Seed database with sample data
+npm run prisma:studio         # Open Prisma Studio (database GUI)
+
+
+COLOR SCHEME (public/css/style.css)
+====================================
+
+Primary Colors:
+├── Primary Green:  #2d6a4f
+├── Light Green:    #52b788
+├── Dark Green:     #1b4332
+├── Background:     #ffffff
+├── Light BG:       #f8f9fa
+└── Border:         #d8f3dc
+
+Status Colors:
+├── Success:        #28a745
+├── Warning:        #ffc107
+└── Danger:         #dc3545
+
+
+DATA FLOW ARCHITECTURE
+======================
+
+Browser Request
+      │
+      ▼
+Express Routes (routes/)
+      │
+      ▼
+Controllers (controllers/)
+      │
+      ▼
+Services (services/)
+      │
+      ▼
+Prisma Client (utils/prisma.js)
+      │
+      ▼
+MySQL Database
+      │
+      ▼
+Prisma Client
+      │
+      ▼
+Services
+      │
+      ▼
+Controllers
+      │
+      ▼
+JSON Response / EJS Render
+      │
+      ▼
+Browser Display
+
+
+TOTAL FILE COUNT
+================
+
+Backend JavaScript:      26 files
+Frontend Templates:       8 files
+CSS Stylesheets:          1 file
+Documentation:            6 files
+Configuration:            4 files
+─────────────────────────────────
+TOTAL:                   45+ files
+
+Database Tables:          7 tables
+API Endpoints:           30+ endpoints
+Code Lines:            5000+ lines

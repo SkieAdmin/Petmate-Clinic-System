@@ -1,0 +1,217 @@
+<div class="page-header">
+  <h2><i class="fas fa-chart-bar"></i> Reports</h2>
+  <p>View clinic statistics and performance metrics</p>
+</div>
+
+<!-- Overview Stats -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">Total Clients</div>
+    <div class="stat-value" id="totalClients">-</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Total Patients</div>
+    <div class="stat-value" id="totalPatients">-</div>
+  </div>
+  <div class="stat-card success">
+    <div class="stat-label">Total Revenue</div>
+    <div class="stat-value" id="totalRevenue">$0.00</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Total Invoices</div>
+    <div class="stat-value" id="totalInvoices">-</div>
+  </div>
+</div>
+
+<!-- Appointment Stats -->
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">Appointment Statistics</h3>
+  </div>
+  <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+    <div>
+      <div class="stat-label">Total Appointments</div>
+      <div class="stat-value" style="font-size: 1.5rem;" id="totalAppointments">-</div>
+    </div>
+    <div>
+      <div class="stat-label">Scheduled</div>
+      <div class="stat-value" style="font-size: 1.5rem; color: var(--light-green);" id="scheduledAppointments">-</div>
+    </div>
+    <div>
+      <div class="stat-label">Completed</div>
+      <div class="stat-value" style="font-size: 1.5rem; color: var(--success);" id="completedAppointments">-</div>
+    </div>
+    <div>
+      <div class="stat-label">Canceled</div>
+      <div class="stat-value" style="font-size: 1.5rem; color: var(--danger);" id="canceledAppointments">-</div>
+    </div>
+  </div>
+</div>
+
+<!-- Top Clients -->
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">Top 10 Clients by Revenue</h3>
+  </div>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Client Name</th>
+          <th>Total Pets</th>
+          <th>Total Invoices</th>
+          <th>Total Revenue</th>
+        </tr>
+      </thead>
+      <tbody id="topClientsTable">
+        <tr>
+          <td colspan="5" class="text-center">
+            <div class="spinner"></div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Revenue Report -->
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">Revenue Report</h3>
+    <div class="flex gap-1">
+      <input type="date" id="revenueStartDate" class="form-control" style="width: auto;">
+      <input type="date" id="revenueEndDate" class="form-control" style="width: auto;">
+      <button class="btn btn-secondary" onclick="loadRevenueReport()">
+        <i class="fas fa-chart-line"></i> Generate
+      </button>
+    </div>
+  </div>
+  <div id="revenueReportContent">
+    <p class="text-center" style="padding: 2rem; color: var(--text-light);">
+      Select a date range and click Generate to view revenue report
+    </p>
+  </div>
+</div>
+
+<script>
+  async function loadDashboardSummary() {
+    try {
+      const response = await fetch('/api/reports/summary');
+      const result = await response.json();
+
+      if (result.success) {
+        const data = result.data;
+        document.getElementById('totalClients').textContent = data.clients.total;
+        document.getElementById('totalPatients').textContent = data.patients.total;
+        document.getElementById('totalRevenue').textContent = '$' + data.revenue.total.toFixed(2);
+        document.getElementById('totalInvoices').textContent = data.invoices.total;
+      }
+    } catch (error) {
+      console.error('Error loading dashboard summary:', error);
+    }
+  }
+
+  async function loadAppointmentStats() {
+    try {
+      const response = await fetch('/api/reports/appointments');
+      const result = await response.json();
+
+      if (result.success) {
+        const stats = result.data;
+        document.getElementById('totalAppointments').textContent = stats.total;
+        document.getElementById('scheduledAppointments').textContent = stats.scheduled;
+        document.getElementById('completedAppointments').textContent = stats.completed;
+        document.getElementById('canceledAppointments').textContent = stats.canceled;
+      }
+    } catch (error) {
+      console.error('Error loading appointment stats:', error);
+    }
+  }
+
+  async function loadTopClients() {
+    const tbody = document.getElementById('topClientsTable');
+
+    try {
+      const response = await fetch('/api/reports/top-clients?limit=10');
+      const result = await response.json();
+
+      if (result.success) {
+        if (result.data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" class="text-center">No data available</td></tr>';
+        } else {
+          tbody.innerHTML = result.data.map((client, index) => `
+            <tr>
+              <td>${index + 1}</td>
+              <td>${client.name}</td>
+              <td>${client.patientCount}</td>
+              <td>${client.invoiceCount}</td>
+              <td style="color: var(--primary-green); font-weight: 600;">$${client.totalRevenue.toFixed(2)}</td>
+            </tr>
+          `).join('');
+        }
+      }
+    } catch (error) {
+      console.error('Error loading top clients:', error);
+      tbody.innerHTML = '<tr><td colspan="5" class="text-center">Error loading data</td></tr>';
+    }
+  }
+
+  async function loadRevenueReport() {
+    const startDate = document.getElementById('revenueStartDate').value;
+    const endDate = document.getElementById('revenueEndDate').value;
+
+    if (!startDate || !endDate) {
+      alert('Please select both start and end dates');
+      return;
+    }
+
+    const content = document.getElementById('revenueReportContent');
+    content.innerHTML = '<div class="spinner"></div>';
+
+    try {
+      const response = await fetch(`/api/reports/revenue?startDate=${startDate}&endDate=${endDate}`);
+      const result = await response.json();
+
+      if (result.success) {
+        const report = result.data;
+        content.innerHTML = `
+          <div style="padding: 1.5rem;">
+            <h4 style="color: var(--primary-green); margin-bottom: 1rem;">
+              Revenue: ${new Date(startDate).toLocaleDateString()} - ${new Date(endDate).toLocaleDateString()}
+            </h4>
+            <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+              <div>
+                <div class="stat-label">Total Revenue</div>
+                <div class="stat-value" style="font-size: 2rem; color: var(--success);">$${report.totalRevenue.toFixed(2)}</div>
+              </div>
+              <div>
+                <div class="stat-label">Number of Invoices</div>
+                <div class="stat-value" style="font-size: 2rem;">${report.invoiceCount}</div>
+              </div>
+              <div>
+                <div class="stat-label">Average Invoice</div>
+                <div class="stat-value" style="font-size: 2rem;">$${(report.totalRevenue / (report.invoiceCount || 1)).toFixed(2)}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+    } catch (error) {
+      console.error('Error loading revenue report:', error);
+      content.innerHTML = '<p class="text-center" style="padding: 2rem; color: var(--danger);">Error loading report</p>';
+    }
+  }
+
+  // Set default dates for revenue report (current month)
+  const now = new Date();
+  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  document.getElementById('revenueStartDate').value = firstDay.toISOString().split('T')[0];
+  document.getElementById('revenueEndDate').value = lastDay.toISOString().split('T')[0];
+
+  // Load all reports on page load
+  loadDashboardSummary();
+  loadAppointmentStats();
+  loadTopClients();
+</script>

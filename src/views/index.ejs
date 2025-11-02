@@ -1,0 +1,113 @@
+<div class="page-header">
+  <h2><i class="fas fa-home"></i> Dashboard</h2>
+  <p>Welcome to the Veterinary Clinic Management System</p>
+</div>
+
+<!-- Stats Cards -->
+<div class="stats-grid" id="statsGrid">
+  <div class="stat-card">
+    <div class="stat-label">Total Clients</div>
+    <div class="stat-value" id="clientCount">-</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Total Patients</div>
+    <div class="stat-value" id="patientCount">-</div>
+  </div>
+  <div class="stat-card success">
+    <div class="stat-label">Upcoming Appointments</div>
+    <div class="stat-value" id="upcomingCount">-</div>
+  </div>
+  <div class="stat-card warning">
+    <div class="stat-label">Low Stock Items</div>
+    <div class="stat-value" id="lowStockCount">-</div>
+  </div>
+</div>
+
+<!-- Revenue Cards -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">Monthly Revenue</div>
+    <div class="stat-value" id="monthlyRevenue">$0.00</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Total Revenue</div>
+    <div class="stat-value" id="totalRevenue">$0.00</div>
+  </div>
+</div>
+
+<!-- Today's Appointments -->
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">Today's Appointments</h3>
+    <a href="/appointments" class="btn btn-secondary btn-sm">View All</a>
+  </div>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Patient</th>
+          <th>Owner</th>
+          <th>Reason</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="todayAppointments">
+        <tr>
+          <td colspan="5" class="text-center">Loading...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  // Fetch dashboard data
+  async function loadDashboard() {
+    try {
+      const response = await fetch('/api/reports/summary');
+      const result = await response.json();
+
+      if (result.success) {
+        const data = result.data;
+
+        // Update stats
+        document.getElementById('clientCount').textContent = data.clients.total;
+        document.getElementById('patientCount').textContent = data.patients.total;
+        document.getElementById('upcomingCount').textContent = data.appointments.upcoming;
+        document.getElementById('lowStockCount').textContent = data.inventory.lowStock;
+        document.getElementById('monthlyRevenue').textContent = '$' + data.revenue.monthly.toFixed(2);
+        document.getElementById('totalRevenue').textContent = '$' + data.revenue.total.toFixed(2);
+
+        // Update today's appointments
+        const tbody = document.getElementById('todayAppointments');
+        if (data.appointments.todayList.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" class="text-center">No appointments today</td></tr>';
+        } else {
+          tbody.innerHTML = data.appointments.todayList.map(apt => {
+            const time = new Date(apt.dateTime).toLocaleTimeString('en-US', {
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+            const statusBadge = apt.status === 'Completed' ? 'badge-success' :
+                               apt.status === 'Canceled' ? 'badge-danger' : 'badge-info';
+            return `
+              <tr>
+                <td>${time}</td>
+                <td>${apt.patient.name}</td>
+                <td>${apt.patient.client.name}</td>
+                <td>${apt.reason || '-'}</td>
+                <td><span class="badge ${statusBadge}">${apt.status}</span></td>
+              </tr>
+            `;
+          }).join('');
+        }
+      }
+    } catch (error) {
+      console.error('Error loading dashboard:', error);
+    }
+  }
+
+  // Load dashboard on page load
+  loadDashboard();
+</script>

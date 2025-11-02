@@ -1,0 +1,384 @@
+// This is your Prisma schema file
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// Client (Pet Owner) Model
+model Client {
+  id           Int           @id @default(autoincrement())
+  name         String
+  phone        String?
+  email        String?
+  address      String?       @db.Text
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  // Relations
+  patients     Patient[]     @relation("ClientPatients")
+  invoices     Invoice[]     @relation("ClientInvoices")
+
+  @@map("clients")
+}
+
+// Patient (Pet) Model
+model Patient {
+  id           Int           @id @default(autoincrement())
+  name         String
+  species      String        // e.g., Dog, Cat, Bird
+  breed        String?
+  birthDate    DateTime?
+  weight       Float?        // Weight in kg
+  qrCode       String?       @unique
+  notes        String?       @db.Text
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  // Foreign Keys
+  clientId     Int
+
+  // Relations
+  client       Client        @relation("ClientPatients", fields: [clientId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+  diagnoses    Diagnosis[]
+  admissions   Admission[]
+  groomings    Grooming[]
+
+  @@index([clientId])
+  @@index([qrCode])
+  @@map("patients")
+}
+
+// Appointment Model
+model Appointment {
+  id           Int           @id @default(autoincrement())
+  dateTime     DateTime
+  reason       String?       @db.Text
+  status       String        @default("Pending") // Pending, Approved, Arrived, Completed, Canceled
+  queueNumber  Int?
+  arrivedAt    DateTime?
+  confirmationInterval Int?   // Minutes before appointment to confirm
+  notes        String?       @db.Text
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  // Foreign Keys
+  patientId    Int
+  doctorId     Int?
+  invoiceId    Int?
+
+  // Relations
+  patient      Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctor       User?         @relation("DoctorAppointments", fields: [doctorId], references: [id])
+  invoice      Invoice?      @relation(fields: [invoiceId], references: [id])
+  diagnoses    Diagnosis[]
+
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([dateTime])
+  @@index([status])
+  @@map("appointments")
+}
+
+// Inventory Item Model
+model Item {
+  id           Int           @id @default(autoincrement())
+  name         String
+  description  String?       @db.Text
+  itemType     String        @default("Product") // Product or Service
+  quantity     Int           @default(0)
+  minQuantity  Int           @default(5) // Threshold for low stock alert
+  price        Float
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  // Relations
+  invoiceItems InvoiceItem[]
+
+  @@map("items")
+}
+
+// Invoice Model
+model Invoice {
+  id           Int           @id @default(autoincrement())
+  invoiceNumber String       @unique
+  date         DateTime      @default(now())
+  totalAmount  Float         @default(0)
+  status       String        @default("Unpaid") // Unpaid, Paid
+  notes        String?       @db.Text
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  // Foreign Keys
+  clientId     Int
+  preparedById Int?
+
+  // Relations
+  client       Client        @relation("ClientInvoices", fields: [clientId], references: [id])
+  preparedBy   User?         @relation("PreparedByUser", fields: [preparedById], references: [id])
+  items        InvoiceItem[]
+  appointments Appointment[]
+  payment      Payment?
+
+  @@index([clientId])
+  @@index([preparedById])
+  @@index([date])
+  @@map("invoices")
+}
+
+// Invoice Item (Junction table for Invoice-Item relationship)
+model InvoiceItem {
+  id           Int           @id @default(autoincrement())
+  quantity     Int
+  priceEach    Float
+  subtotal     Float
+
+  // Foreign Keys
+  invoiceId    Int
+  itemId       Int
+
+  // Relations
+  invoice      Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  item         Item          @relation(fields: [itemId], references: [id])
+
+  @@index([invoiceId])
+  @@index([itemId])
+  @@map("invoice_items")
+}
+
+// ==================== NEW EXTENDED MODELS ====================
+
+// User & Role Models for RBAC
+model Role {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique // Admin, Doctor, Frontdesk, Employee
+  description String?  @db.Text
+  permissions String   @db.Text // JSON array of module permissions
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  users       User[]
+
+  @@map("roles")
+}
+
+model User {
+  id              Int      @id @default(autoincrement())
+  username        String   @unique
+  email           String   @unique
+  password        String   // Hashed password
+  fullName        String
+  phone           String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Foreign Keys
+  roleId          Int
+
+  // Relations
+  role            Role          @relation(fields: [roleId], references: [id])
+  appointments    Appointment[] @relation("DoctorAppointments")
+  diagnoses       Diagnosis[]   @relation("DoctorDiagnoses")
+  invoices        Invoice[]     @relation("PreparedByUser")
+  payments        Payment[]     @relation("ReceivedByUser")
+  admissions      Admission[]   @relation("AdmittedByUser")
+
+  @@index([roleId])
+  @@index([email])
+  @@map("users")
+}
+
+// Diagnosis Model
+model Diagnosis {
+  id               Int        @id @default(autoincrement())
+  diagnosisDetails String     @db.Text
+  remarks          String?    @db.Text
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  // Foreign Keys
+  patientId        Int
+  appointmentId    Int?
+  doctorId         Int
+
+  // Relations
+  patient          Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  appointment      Appointment?  @relation(fields: [appointmentId], references: [id])
+  doctor           User          @relation("DoctorDiagnoses", fields: [doctorId], references: [id])
+  laboratories     Laboratory[]
+  treatments       Treatment[]
+  prescriptions    Prescription[]
+
+  @@index([patientId])
+  @@index([appointmentId])
+  @@index([doctorId])
+  @@map("diagnoses")
+}
+
+// Laboratory Model
+model Laboratory {
+  id             Int      @id @default(autoincrement())
+  testType       String
+  result         String   @db.Text
+  technician     String?
+  datePerformed  DateTime @default(now())
+  attachmentUrl  String?  // Optional lab report file
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Foreign Keys
+  diagnosisId    Int
+
+  // Relations
+  diagnosis      Diagnosis @relation(fields: [diagnosisId], references: [id], onDelete: Cascade)
+
+  @@index([diagnosisId])
+  @@map("laboratories")
+}
+
+// Treatment (CVC) Model
+model Treatment {
+  id             Int      @id @default(autoincrement())
+  treatmentType  String
+  medication     String?
+  dosage         String?
+  duration       String?
+  cost           Float    @default(0)
+  notes          String?  @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Foreign Keys
+  diagnosisId    Int
+
+  // Relations
+  diagnosis      Diagnosis @relation(fields: [diagnosisId], references: [id], onDelete: Cascade)
+
+  @@index([diagnosisId])
+  @@map("treatments")
+}
+
+// Prescription (Recita) Model
+model Prescription {
+  id             Int      @id @default(autoincrement())
+  doctorName     String
+  medications    String   @db.Text // JSON array or text list
+  instructions   String   @db.Text
+  issuedDate     DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Foreign Keys
+  diagnosisId    Int
+  patientId      Int
+
+  // Relations
+  diagnosis      Diagnosis @relation(fields: [diagnosisId], references: [id], onDelete: Cascade)
+
+  @@index([diagnosisId])
+  @@index([patientId])
+  @@map("prescriptions")
+}
+
+// Admission Model
+model Admission {
+  id             Int      @id @default(autoincrement())
+  admissionType  String   // Infectious or Non-Infectious
+  admissionDate  DateTime @default(now())
+  dischargeDate  DateTime?
+  reason         String   @db.Text
+  notes          String?  @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Foreign Keys
+  patientId      Int
+  admittedById   Int
+
+  // Relations
+  patient        Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  admittedBy     User         @relation("AdmittedByUser", fields: [admittedById], references: [id])
+  confinements   Confinement[]
+
+  @@index([patientId])
+  @@index([admittedById])
+  @@map("admissions")
+}
+
+// Confinement Model
+model Confinement {
+  id             Int      @id @default(autoincrement())
+  status         String   @default("Ongoing") // Ongoing, Recovery, Patient Out
+  notes          String?  @db.Text
+  checkDate      DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Foreign Keys
+  admissionId    Int
+
+  // Relations
+  admission      Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+
+  @@index([admissionId])
+  @@map("confinements")
+}
+
+// Grooming Model
+model Grooming {
+  id                Int      @id @default(autoincrement())
+  serviceType       String   // Clinic Service or Home Service
+  basePrice         Float
+  premiumPrice      Float?
+  numberOfPatients  Int      @default(1)
+  totalAmount       Float
+  isPaid            Boolean  @default(false)
+  scheduledDate     DateTime
+  notes             String?  @db.Text
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Foreign Keys
+  clientId          Int
+  patientId         Int
+
+  // Relations
+  patient           Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([patientId])
+  @@index([clientId])
+  @@map("groomings")
+}
+
+// Payment Model (Enhanced Billing)
+model Payment {
+  id              Int      @id @default(autoincrement())
+  paymentMethod   String   // Cash, GCash, Mixed
+  cashAmount      Float    @default(0)
+  gcashAmount     Float    @default(0)
+  gcashReference  String?
+  totalAmount     Float
+  paymentDate     DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Foreign Keys
+  invoiceId       Int      @unique
+  receivedById    Int
+
+  // Relations
+  invoice         Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  receivedBy      User     @relation("ReceivedByUser", fields: [receivedById], references: [id])
+
+  @@index([invoiceId])
+  @@index([receivedById])
+  @@map("payments")
+}
