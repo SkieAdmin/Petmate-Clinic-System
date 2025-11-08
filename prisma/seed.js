@@ -1,4 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
 
 const prisma = new PrismaClient();
 
@@ -13,6 +14,78 @@ async function main() {
   await prisma.patient.deleteMany();
   await prisma.client.deleteMany();
   await prisma.item.deleteMany();
+  await prisma.user.deleteMany();
+  await prisma.role.deleteMany();
+
+  console.log('Creating roles...');
+
+  // Create roles
+  const adminRole = await prisma.role.create({
+    data: {
+      name: 'Admin',
+      description: 'Full system access with all permissions',
+      permissions: JSON.stringify([
+        'clients.view', 'clients.create', 'clients.edit', 'clients.delete',
+        'patients.view', 'patients.create', 'patients.edit', 'patients.delete',
+        'appointments.view', 'appointments.create', 'appointments.edit', 'appointments.delete',
+        'inventory.view', 'inventory.create', 'inventory.edit', 'inventory.delete',
+        'invoices.view', 'invoices.create', 'invoices.edit', 'invoices.delete',
+        'reports.view', 'users.manage'
+      ]),
+    },
+  });
+
+  const doctorRole = await prisma.role.create({
+    data: {
+      name: 'Doctor',
+      description: 'Veterinarian with access to patient care features',
+      permissions: JSON.stringify([
+        'clients.view', 'patients.view', 'patients.edit',
+        'appointments.view', 'appointments.edit',
+        'inventory.view', 'invoices.view', 'reports.view'
+      ]),
+    },
+  });
+
+  const frontdeskRole = await prisma.role.create({
+    data: {
+      name: 'Frontdesk',
+      description: 'Front desk staff with scheduling and billing access',
+      permissions: JSON.stringify([
+        'clients.view', 'clients.create', 'clients.edit',
+        'patients.view', 'patients.create', 'patients.edit',
+        'appointments.view', 'appointments.create', 'appointments.edit',
+        'invoices.view', 'invoices.create', 'invoices.edit'
+      ]),
+    },
+  });
+
+  const employeeRole = await prisma.role.create({
+    data: {
+      name: 'Employee',
+      description: 'Basic employee with limited view access',
+      permissions: JSON.stringify([
+        'clients.view', 'patients.view', 'appointments.view', 'inventory.view'
+      ]),
+    },
+  });
+
+  console.log('Creating default users...');
+
+  // Create admin user (password: admin123)
+  const hashedPassword = await bcrypt.hash('admin123', 10);
+
+  await prisma.user.create({
+    data: {
+      username: 'admin',
+      email: 'admin@petmate.com',
+      password: hashedPassword,
+      fullName: 'System Administrator',
+      phone: '(555) 999-0000',
+      roleId: adminRole.id,
+      isActive: true,
+    },
+  });
 
   console.log('Creating clients...');
 
@@ -350,6 +423,8 @@ async function main() {
 
   console.log('Database seed completed successfully!');
   console.log('Summary:');
+  console.log('- 4 Roles created (Admin, Doctor, Frontdesk, Employee)');
+  console.log('- 1 User created (admin/admin123)');
   console.log('- 4 Clients created');
   console.log('- 6 Patients created');
   console.log('- 7 Inventory items created');

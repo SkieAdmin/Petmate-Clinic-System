@@ -102,10 +102,10 @@ class ReportService {
     ]);
 
     return {
-      total,
-      scheduled,
-      completed,
-      canceled,
+      total: Number(total),
+      scheduled: Number(scheduled),
+      completed: Number(completed),
+      canceled: Number(canceled),
     };
   }
 

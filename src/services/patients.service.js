@@ -92,7 +92,8 @@ class PatientService {
 
   // Get patient count
   async getPatientCount() {
-    return await prisma.patient.count();
+    const count = await prisma.patient.count();
+    return Number(count);
   }
 }
 

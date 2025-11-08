@@ -98,7 +98,8 @@ class ItemService {
 
   // Get item count
   async getItemCount() {
-    return await prisma.item.count();
+    const count = await prisma.item.count();
+    return Number(count);
   }
 
   // Get low stock count
@@ -107,7 +108,7 @@ class ItemService {
       SELECT COUNT(*) as count FROM items
       WHERE quantity <= minQuantity
     `;
-    return result[0].count;
+    return Number(result[0].count);
   }
 }
 

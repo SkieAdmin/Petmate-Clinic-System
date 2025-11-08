@@ -11,7 +11,7 @@ class InvoiceService {
         },
       },
     });
-    const nextNumber = (count + 1).toString().padStart(4, '0');
+    const nextNumber = (Number(count) + 1).toString().padStart(4, '0');
     return `INV-${year}-${nextNumber}`;
   }
 
@@ -175,7 +175,8 @@ class InvoiceService {
 
   // Get invoice count
   async getInvoiceCount() {
-    return await prisma.invoice.count();
+    const count = await prisma.invoice.count();
+    return Number(count);
   }
 }
 

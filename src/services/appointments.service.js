@@ -125,12 +125,13 @@ class AppointmentService {
   // Get appointment count (with optional status filter)
   async getAppointmentCount(status = null) {
     const where = status ? { status } : {};
-    return await prisma.appointment.count({ where });
+    const count = await prisma.appointment.count({ where });
+    return Number(count);
   }
 
   // Get upcoming appointments count
   async getUpcomingAppointmentsCount() {
-    return await prisma.appointment.count({
+    const count = await prisma.appointment.count({
       where: {
         dateTime: {
           gte: new Date(),
@@ -138,6 +139,7 @@ class AppointmentService {
         status: 'Scheduled',
       },
     });
+    return Number(count);
   }
 }
 

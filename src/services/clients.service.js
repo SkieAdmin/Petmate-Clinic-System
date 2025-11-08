@@ -76,7 +76,8 @@ class ClientService {
 
   // Get client count
   async getClientCount() {
-    return await prisma.client.count();
+    const count = await prisma.client.count();
+    return Number(count);
   }
 }
 
