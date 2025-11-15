@@ -17,4 +17,7 @@ router.put('/:id', clientController.updateClient);
 // DELETE /api/clients/:id - Delete client
 router.delete('/:id', clientController.deleteClient);
 
+// POST /api/clients/:id/confirm-email - Confirm client email
+router.post('/:id/confirm-email', clientController.confirmEmail);
+
 module.exports = router;

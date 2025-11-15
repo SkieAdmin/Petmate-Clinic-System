@@ -12,13 +12,15 @@ datasource db {
 
 // Client (Pet Owner) Model
 model Client {
-  id           Int           @id @default(autoincrement())
-  name         String
-  phone        String?
-  email        String?
-  address      String?       @db.Text
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id              Int           @id @default(autoincrement())
+  name            String
+  phone           String?
+  email           String?
+  address         String?       @db.Text
+  emailVerified   Boolean       @default(false)
+  emailVerifiedAt DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   // Relations
   patients     Patient[]     @relation("ClientPatients")
@@ -381,4 +383,18 @@ model Payment {
   @@index([invoiceId])
   @@index([receivedById])
   @@map("payments")
+}
+
+// Booking Attempt Model (Rate Limiting for Public Bookings)
+model BookingAttempt {
+  id              Int      @id @default(autoincrement())
+  ipAddress       String
+  fingerprint     String?
+  appointmentId   Int?
+  createdAt       DateTime @default(now())
+
+  @@index([ipAddress])
+  @@index([fingerprint])
+  @@index([createdAt])
+  @@map("booking_attempts")
 }

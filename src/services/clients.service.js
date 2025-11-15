@@ -69,6 +69,26 @@ class ClientService {
 
   // Delete client
   async deleteClient(id) {
+    // Check if client has any invoices
+    const client = await prisma.client.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        invoices: true,
+        patients: true,
+      },
+    });
+
+    if (!client) {
+      throw new Error('Client not found');
+    }
+
+    if (client.invoices.length > 0) {
+      throw new Error(
+        `Cannot delete client with existing invoices. Please delete or reassign ${client.invoices.length} invoice(s) first.`
+      );
+    }
+
+    // Note: Patients will be automatically deleted due to CASCADE in schema
     return await prisma.client.delete({
       where: { id: parseInt(id) },
     });
@@ -78,6 +98,29 @@ class ClientService {
   async getClientCount() {
     const count = await prisma.client.count();
     return Number(count);
+  }
+
+  // Confirm client email
+  async confirmEmail(id) {
+    const client = await prisma.client.findUnique({
+      where: { id: parseInt(id) },
+    });
+
+    if (!client) {
+      throw new Error('Client not found');
+    }
+
+    if (client.emailVerified) {
+      throw new Error('Email is already verified');
+    }
+
+    return await prisma.client.update({
+      where: { id: parseInt(id) },
+      data: {
+        emailVerified: true,
+        emailVerifiedAt: new Date(),
+      },
+    });
   }
 }
 

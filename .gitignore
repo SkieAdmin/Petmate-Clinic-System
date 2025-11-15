@@ -27,3 +27,4 @@ build/
 prisma/.env
 package-lock.json
 nul
+*.json

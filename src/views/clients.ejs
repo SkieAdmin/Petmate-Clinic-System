@@ -25,13 +25,14 @@
           <th>Name</th>
           <th>Phone</th>
           <th>Email</th>
+          <th>Email Status</th>
           <th>Pets</th>
           <th>Actions</th>
         </tr>
       </thead>
       <tbody id="clientsTable">
         <tr>
-          <td colspan="5" class="text-center">
+          <td colspan="6" class="text-center">
             <div class="spinner"></div>
           </td>
         </tr>
@@ -41,7 +42,7 @@
 </div>
 
 <!-- Add/Edit Client Modal (Simple Form Popup) -->
-<div id="clientModal" class="modal hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: flex; align-items: center; justify-content: center;">
+<div id="clientModal" class="modal hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: none; align-items: center; justify-content: center;">
   <div class="card" style="width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto;">
     <div class="card-header">
       <h3 class="card-title" id="modalTitle">Add Client</h3>
@@ -86,29 +87,68 @@
 
       if (result.success) {
         if (result.data.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="5" class="text-center">No clients found</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="6" class="text-center">No clients found</td></tr>';
         } else {
-          tbody.innerHTML = result.data.map(client => `
-            <tr>
-              <td>${client.name}</td>
-              <td>${client.phone || '-'}</td>
-              <td>${client.email || '-'}</td>
-              <td>${client._count.patients}</td>
-              <td>
-                <button class="btn btn-sm btn-secondary" onclick="editClient(${client.id})">
-                  <i class="fas fa-edit"></i> Edit
-                </button>
-                <button class="btn btn-sm btn-danger" onclick="deleteClient(${client.id})">
-                  <i class="fas fa-trash"></i> Delete
-                </button>
-              </td>
-            </tr>
-          `).join('');
+          tbody.innerHTML = result.data.map(client => {
+            const emailStatus = client.email ? (
+              client.emailVerified
+                ? '<span class="badge badge-success"><i class="fas fa-check-circle"></i> Verified</span>'
+                : '<span class="badge badge-danger"><i class="fas fa-exclamation-circle"></i> Not Confirmed</span>'
+            ) : '-';
+
+            const confirmButton = client.email && !client.emailVerified
+              ? `<button class="btn btn-sm btn-success" onclick="confirmEmail(${client.id})" title="Confirm email">
+                   <i class="fas fa-check"></i> Confirm Email
+                 </button>`
+              : '';
+
+            return `
+              <tr>
+                <td>${client.name}</td>
+                <td>${client.phone || '-'}</td>
+                <td>${client.email || '-'}</td>
+                <td>${emailStatus}</td>
+                <td>${client._count.patients}</td>
+                <td>
+                  ${confirmButton}
+                  <button class="btn btn-sm btn-secondary" onclick="editClient(${client.id})">
+                    <i class="fas fa-edit"></i> Edit
+                  </button>
+                  <button class="btn btn-sm btn-danger" onclick="deleteClient(${client.id})">
+                    <i class="fas fa-trash"></i> Delete
+                  </button>
+                </td>
+              </tr>
+            `;
+          }).join('');
         }
       }
     } catch (error) {
       console.error('Error loading clients:', error);
-      tbody.innerHTML = '<tr><td colspan="5" class="text-center">Error loading clients</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center">Error loading clients</td></tr>';
+    }
+  }
+
+  async function confirmEmail(clientId) {
+    if (!confirm('Confirm this client\'s email address?')) return;
+
+    try {
+      const response = await fetch(`/api/clients/${clientId}/confirm-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert('Email confirmed successfully!');
+        loadClients();
+      } else {
+        alert('Error: ' + result.message);
+      }
+    } catch (error) {
+      console.error('Error confirming email:', error);
+      alert('Error confirming email');
     }
   }
 

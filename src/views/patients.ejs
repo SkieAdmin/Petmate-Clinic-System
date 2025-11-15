@@ -41,7 +41,93 @@
   </div>
 </div>
 
+<!-- Add/Edit Patient Modal -->
+<div id="patientModal" class="modal hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: none; align-items: center; justify-content: center;">
+  <div class="card" style="width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto;">
+    <div class="card-header">
+      <h3 class="card-title" id="modalTitle">Add Patient</h3>
+      <button onclick="closeModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+    </div>
+    <form id="patientForm" onsubmit="savePatient(event)">
+      <input type="hidden" id="patientId">
+
+      <div class="form-group">
+        <label class="form-label">Owner/Client *</label>
+        <input
+          type="text"
+          id="clientSearch"
+          class="form-control"
+          placeholder="Search client by name..."
+          autocomplete="off"
+          onkeyup="filterClients()"
+          onfocus="showClientDropdown()"
+        >
+        <select id="patientClient" class="form-control" required style="margin-top: 5px;" size="5" onchange="selectClient()" onfocus="showClientDropdown()">
+          <option value="">-- Select a client --</option>
+        </select>
+        <input type="hidden" id="selectedClientId" required>
+        <small style="color: #666;">Don't see the client? <a href="/clients" style="color: #2d6a4f;">Add a new client first</a></small>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Pet Name *</label>
+          <input type="text" id="patientName" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Species *</label>
+          <select id="patientSpecies" class="form-control" required>
+            <option value="">Select species</option>
+            <option value="Dog">Dog</option>
+            <option value="Cat">Cat</option>
+            <option value="Bird">Bird</option>
+            <option value="Rabbit">Rabbit</option>
+            <option value="Hamster">Hamster</option>
+            <option value="Guinea Pig">Guinea Pig</option>
+            <option value="Reptile">Reptile</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Breed</label>
+          <input type="text" id="patientBreed" class="form-control" placeholder="e.g., Golden Retriever">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Weight (kg)</label>
+          <input type="number" id="patientWeight" class="form-control" step="0.1" min="0" placeholder="e.g., 5.5">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Birth Date</label>
+        <input type="date" id="patientBirthDate" class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea id="patientNotes" class="form-control" rows="3" placeholder="Medical history, allergies, behavioral notes, etc."></textarea>
+      </div>
+
+      <div class="flex gap-1">
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-save"></i> Save Patient
+        </button>
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">
+          <i class="fas fa-times"></i> Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script>
+  let currentPatientId = null;
+
   async function loadPatients() {
     const search = document.getElementById('searchInput').value;
     const tbody = document.getElementById('patientsTable');
@@ -64,8 +150,8 @@
                 <td>${patient.client.name}</td>
                 <td>${birthDate}</td>
                 <td>
-                  <button class="btn btn-sm btn-secondary" onclick="viewPatient(${patient.id})">
-                    <i class="fas fa-eye"></i> View
+                  <button class="btn btn-sm btn-secondary" onclick="editPatient(${patient.id})">
+                    <i class="fas fa-edit"></i> Edit
                   </button>
                   <button class="btn btn-sm btn-danger" onclick="deletePatient(${patient.id})">
                     <i class="fas fa-trash"></i> Delete
@@ -82,12 +168,181 @@
     }
   }
 
-  function showAddModal() {
-    alert('Add Patient form - Connect to client selection and form modal');
+  let allClients = [];
+
+  async function loadClients() {
+    try {
+      const response = await fetch('/api/clients');
+      const result = await response.json();
+
+      if (result.success) {
+        allClients = result.data;
+        displayClients(allClients);
+      }
+    } catch (error) {
+      console.error('Error loading clients:', error);
+    }
+  }
+
+  function displayClients(clients) {
+    const select = document.getElementById('patientClient');
+    select.innerHTML = '<option value="">-- Select a client --</option>';
+
+    clients.forEach(client => {
+      const option = document.createElement('option');
+      option.value = client.id;
+      option.textContent = client.name;
+      option.setAttribute('data-email', client.email || '');
+      option.setAttribute('data-phone', client.phone || '');
+      select.appendChild(option);
+    });
+  }
+
+  function filterClients() {
+    const searchTerm = document.getElementById('clientSearch').value.toLowerCase();
+
+    if (searchTerm === '') {
+      displayClients(allClients);
+      return;
+    }
+
+    const filtered = allClients.filter(client =>
+      client.name.toLowerCase().includes(searchTerm) ||
+      (client.email && client.email.toLowerCase().includes(searchTerm)) ||
+      (client.phone && client.phone.includes(searchTerm))
+    );
+
+    displayClients(filtered);
+
+    // Show the dropdown
+    const select = document.getElementById('patientClient');
+    select.style.display = 'block';
+  }
+
+  function selectClient() {
+    const select = document.getElementById('patientClient');
+    const selectedOption = select.options[select.selectedIndex];
+
+    if (selectedOption.value) {
+      document.getElementById('clientSearch').value = selectedOption.textContent;
+      document.getElementById('selectedClientId').value = selectedOption.value;
+      select.style.display = 'none';
+    }
+  }
+
+  function showClientDropdown() {
+    const select = document.getElementById('patientClient');
+    select.style.display = 'block';
+  }
+
+  // Hide dropdown when clicking outside
+  document.addEventListener('click', function(e) {
+    const select = document.getElementById('patientClient');
+    const searchInput = document.getElementById('clientSearch');
+
+    if (select && searchInput && e.target !== select && e.target !== searchInput) {
+      select.style.display = 'none';
+    }
+  });
+
+  async function showAddModal() {
+    await loadClients();
+    document.getElementById('modalTitle').textContent = 'Add Patient';
+    document.getElementById('patientForm').reset();
+    document.getElementById('patientId').value = '';
+    document.getElementById('clientSearch').value = '';
+    document.getElementById('selectedClientId').value = '';
+    document.getElementById('patientClient').style.display = 'none';
+    document.getElementById('patientModal').classList.remove('hidden');
+    document.getElementById('patientModal').style.display = 'flex';
+  }
+
+  async function editPatient(id) {
+    try {
+      await loadClients();
+      const response = await fetch(`/api/patients/${id}`);
+      const result = await response.json();
+
+      if (result.success) {
+        const patient = result.data;
+        document.getElementById('modalTitle').textContent = 'Edit Patient';
+        document.getElementById('patientId').value = patient.id;
+
+        // Set client search and selection
+        document.getElementById('clientSearch').value = patient.client.name;
+        document.getElementById('selectedClientId').value = patient.clientId;
+        document.getElementById('patientClient').value = patient.clientId;
+        document.getElementById('patientClient').style.display = 'none';
+
+        document.getElementById('patientName').value = patient.name;
+        document.getElementById('patientSpecies').value = patient.species;
+        document.getElementById('patientBreed').value = patient.breed || '';
+        document.getElementById('patientWeight').value = patient.weight || '';
+        document.getElementById('patientBirthDate').value = patient.birthDate ? patient.birthDate.split('T')[0] : '';
+        document.getElementById('patientNotes').value = patient.notes || '';
+        document.getElementById('patientModal').classList.remove('hidden');
+        document.getElementById('patientModal').style.display = 'flex';
+      }
+    } catch (error) {
+      console.error('Error loading patient:', error);
+      alert('Error loading patient details');
+    }
+  }
+
+  async function savePatient(event) {
+    event.preventDefault();
+
+    const id = document.getElementById('patientId').value;
+    const clientId = document.getElementById('selectedClientId').value;
+
+    if (!clientId) {
+      alert('Please select a client');
+      return;
+    }
+
+    const data = {
+      clientId: clientId,
+      name: document.getElementById('patientName').value,
+      species: document.getElementById('patientSpecies').value,
+      breed: document.getElementById('patientBreed').value || null,
+      weight: document.getElementById('patientWeight').value ? parseFloat(document.getElementById('patientWeight').value) : null,
+      birthDate: document.getElementById('patientBirthDate').value || null,
+      notes: document.getElementById('patientNotes').value || null,
+    };
+
+    const url = id ? `/api/patients/${id}` : '/api/patients';
+    const method = id ? 'PUT' : 'POST';
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert(id ? 'Patient updated successfully!' : 'Patient added successfully!');
+        closeModal();
+        loadPatients();
+      } else {
+        alert('Error: ' + result.message);
+      }
+    } catch (error) {
+      console.error('Error saving patient:', error);
+      alert('Error saving patient');
+    }
   }
 
   function viewPatient(id) {
-    alert(`View patient ${id} - Show detailed patient information`);
+    // For now, just edit the patient. Later can create a detailed view page
+    editPatient(id);
+  }
+
+  function closeModal() {
+    document.getElementById('patientModal').classList.add('hidden');
+    document.getElementById('patientModal').style.display = 'none';
   }
 
   async function deletePatient(id) {

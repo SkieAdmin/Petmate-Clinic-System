@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book Appointment - Petmate Clinic</title>
+  <link rel="stylesheet" href="/css/auth.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-box">
+      <div class="auth-header">
+        <div class="logo">
+          <i class="fas fa-calendar-check"></i>
+        </div>
+        <h1>Book an Appointment</h1>
+        <p>Schedule a visit for your pet at Petmate Clinic</p>
+      </div>
+
+      <form id="bookingForm" class="auth-form">
+        <div class="form-group">
+          <label>
+            <i class="fas fa-user"></i>
+            Owner Name *
+          </label>
+          <input
+            type="text"
+            id="ownerName"
+            placeholder="Your full name"
+            required
+          >
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>
+              <i class="fas fa-envelope"></i>
+              Email *
+            </label>
+            <input
+              type="email"
+              id="ownerEmail"
+              placeholder="your@email.com"
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label>
+              <i class="fas fa-phone"></i>
+              Phone *
+            </label>
+            <input
+              type="tel"
+              id="ownerPhone"
+              placeholder="(555) 123-4567"
+              required
+            >
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>
+              <i class="fas fa-paw"></i>
+              Pet Name *
+            </label>
+            <input
+              type="text"
+              id="petName"
+              placeholder="Your pet's name"
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label>
+              <i class="fas fa-dog"></i>
+              Species *
+            </label>
+            <select id="petSpecies" required>
+              <option value="">Select species</option>
+              <option value="Dog">Dog</option>
+              <option value="Cat">Cat</option>
+              <option value="Bird">Bird</option>
+              <option value="Rabbit">Rabbit</option>
+              <option value="Hamster">Hamster</option>
+              <option value="Guinea Pig">Guinea Pig</option>
+              <option value="Reptile">Reptile</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>
+            <i class="fas fa-info-circle"></i>
+            Breed
+          </label>
+          <input
+            type="text"
+            id="petBreed"
+            placeholder="e.g., Golden Retriever"
+          >
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>
+              <i class="fas fa-calendar-day"></i>
+              Preferred Date *
+            </label>
+            <input
+              type="date"
+              id="appointmentDate"
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label>
+              <i class="fas fa-clock"></i>
+              Preferred Time *
+            </label>
+            <input
+              type="time"
+              id="appointmentTime"
+              required
+            >
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>
+            <i class="fas fa-comment-medical"></i>
+            Reason for Visit *
+          </label>
+          <textarea
+            id="appointmentReason"
+            rows="3"
+            placeholder="e.g., Annual checkup, Vaccination, Sick visit"
+            required
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>
+            <i class="fas fa-sticky-note"></i>
+            Additional Notes
+          </label>
+          <textarea
+            id="additionalNotes"
+            rows="2"
+            placeholder="Any special concerns or information we should know"
+          ></textarea>
+        </div>
+
+        <button type="submit" class="btn-primary" id="submitBtn">
+          <i class="fas fa-calendar-check"></i>
+          Book Appointment
+        </button>
+
+        <div class="auth-footer">
+          <p>Already have an account? <a href="/login">Login here</a></p>
+        </div>
+      </form>
+
+      <div id="message" class="message"></div>
+    </div>
+
+    <div class="auth-info">
+      <div class="info-content">
+        <h2>Why Choose Petmate Clinic?</h2>
+        <p>Professional veterinary care for your beloved pets</p>
+        <div class="features">
+          <div class="feature">
+            <i class="fas fa-user-md"></i>
+            <span>Experienced veterinarians</span>
+          </div>
+          <div class="feature">
+            <i class="fas fa-hospital"></i>
+            <span>Modern facilities</span>
+          </div>
+          <div class="feature">
+            <i class="fas fa-heart"></i>
+            <span>Compassionate care</span>
+          </div>
+          <div class="feature">
+            <i class="fas fa-clock"></i>
+            <span>Flexible scheduling</span>
+          </div>
+        </div>
+        <div style="margin-top: 40px; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 10px;">
+          <h3 style="margin-bottom: 10px;">Office Hours</h3>
+          <p style="margin: 5px 0;">Monday - Friday: 8:00 AM - 6:00 PM</p>
+          <p style="margin: 5px 0;">Saturday: 9:00 AM - 4:00 PM</p>
+          <p style="margin: 5px 0;">Sunday: Closed</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Generate browser fingerprint
+    function generateFingerprint() {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      ctx.textBaseline = 'top';
+      ctx.font = '14px Arial';
+      ctx.fillText('fingerprint', 2, 2);
+      const canvasData = canvas.toDataURL();
+
+      const fingerprint = {
+        userAgent: navigator.userAgent,
+        language: navigator.language,
+        colorDepth: screen.colorDepth,
+        screenResolution: `${screen.width}x${screen.height}`,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        canvas: canvasData,
+        platform: navigator.platform,
+      };
+
+      // Create a hash-like string from the fingerprint
+      const fpString = JSON.stringify(fingerprint);
+      let hash = 0;
+      for (let i = 0; i < fpString.length; i++) {
+        const char = fpString.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+      }
+      return hash.toString(36);
+    }
+
+    // Set minimum date to today
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('appointmentDate').min = today;
+    document.getElementById('appointmentDate').value = today;
+
+    // Set default time to next available hour
+    const now = new Date();
+    now.setHours(now.getHours() + 1);
+    const hours = String(now.getHours()).padStart(2, '0');
+    document.getElementById('appointmentTime').value = `${hours}:00`;
+
+    function showMessage(text, type = 'error') {
+      const messageDiv = document.getElementById('message');
+      messageDiv.textContent = text;
+      messageDiv.className = `message ${type}`;
+      messageDiv.style.display = 'block';
+
+      setTimeout(() => {
+        messageDiv.style.display = 'none';
+      }, 5000);
+    }
+
+    document.getElementById('bookingForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Booking...';
+
+      const formData = {
+        ownerName: document.getElementById('ownerName').value,
+        ownerEmail: document.getElementById('ownerEmail').value,
+        ownerPhone: document.getElementById('ownerPhone').value,
+        petName: document.getElementById('petName').value,
+        petSpecies: document.getElementById('petSpecies').value,
+        petBreed: document.getElementById('petBreed').value,
+        appointmentDate: document.getElementById('appointmentDate').value,
+        appointmentTime: document.getElementById('appointmentTime').value,
+        reason: document.getElementById('appointmentReason').value,
+        notes: document.getElementById('additionalNotes').value,
+        fingerprint: generateFingerprint(), // Add browser fingerprint for rate limiting
+      };
+
+      try {
+        const response = await fetch('/api/public/book-appointment', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showMessage('Appointment booked successfully! We will contact you soon to confirm.', 'success');
+          document.getElementById('bookingForm').reset();
+
+          // Reset to default values
+          document.getElementById('appointmentDate').value = today;
+          document.getElementById('appointmentTime').value = `${hours}:00`;
+        } else {
+          showMessage(data.message || 'Booking failed. Please try again.');
+        }
+      } catch (error) {
+        showMessage('An error occurred. Please try again.');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Book Appointment';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -71,6 +71,17 @@ class ClientController {
       message: 'Client deleted successfully',
     });
   });
+
+  // Confirm client email
+  confirmEmail = asyncHandler(async (req, res) => {
+    const client = await clientService.confirmEmail(req.params.id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Email confirmed successfully',
+      data: client,
+    });
+  });
 }
 
 module.exports = new ClientController();

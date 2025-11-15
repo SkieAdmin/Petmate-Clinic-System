@@ -40,6 +40,7 @@ app.set('layout', 'layout');
 
 // Import routes
 const authRouter = require('./routes/auth.routes');
+const publicRouter = require('./routes/public.routes');
 const clientsRouter = require('./routes/clients.routes');
 const patientsRouter = require('./routes/patients.routes');
 const appointmentsRouter = require('./routes/appointments.routes');
@@ -47,8 +48,9 @@ const itemsRouter = require('./routes/items.routes');
 const invoicesRouter = require('./routes/invoices.routes');
 const reportsRouter = require('./routes/reports.routes');
 
-// Auth routes (public)
+// Public routes (no authentication required)
 app.use('/api/auth', authRouter);
+app.use('/api/public', publicRouter);
 
 // Protected API Routes
 app.use('/api/clients', authenticate, clientsRouter);
@@ -65,6 +67,10 @@ app.get('/login', redirectIfAuthenticated, (req, res) => {
 
 app.get('/register', redirectIfAuthenticated, (req, res) => {
   res.render('register', { title: 'Register', layout: false });
+});
+
+app.get('/get_appoint', (req, res) => {
+  res.render('book-appointment', { title: 'Book Appointment', layout: false });
 });
 
 // Protected web routes
