@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Treatment Record - <%= patient.name %></title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      padding: 20px;
+      line-height: 1.6;
+      color: #333;
+    }
+
+    .print-container {
+      max-width: 800px;
+      margin: 0 auto;
+      border: 2px solid #2d6a4f;
+      padding: 30px;
+    }
+
+    .header {
+      text-align: center;
+      border-bottom: 3px solid #2d6a4f;
+      padding-bottom: 15px;
+      margin-bottom: 25px;
+    }
+
+    .clinic-name {
+      font-size: 28px;
+      font-weight: bold;
+      color: #2d6a4f;
+      margin-bottom: 5px;
+    }
+
+    .clinic-subtitle {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 5px;
+    }
+
+    .doc-type {
+      font-size: 20px;
+      font-weight: bold;
+      color: #1b4332;
+      margin-top: 10px;
+      padding: 8px;
+      background: #e8f5e9;
+      border-radius: 4px;
+    }
+
+    .section {
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: bold;
+      color: #2d6a4f;
+      border-bottom: 2px solid #95d5b2;
+      padding-bottom: 5px;
+      margin-bottom: 10px;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 150px 1fr;
+      gap: 8px;
+      margin-bottom: 15px;
+    }
+
+    .info-label {
+      font-weight: bold;
+      color: #555;
+    }
+
+    .info-value {
+      color: #333;
+    }
+
+    .treatment-details {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      border-left: 4px solid #2d6a4f;
+      margin-bottom: 15px;
+    }
+
+    .treatment-row {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid #dee2e6;
+    }
+
+    .treatment-row:last-child {
+      border-bottom: none;
+    }
+
+    .notes-box {
+      background: #fff;
+      border: 1px solid #dee2e6;
+      padding: 15px;
+      border-radius: 4px;
+      min-height: 80px;
+      white-space: pre-wrap;
+    }
+
+    .footer {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 2px solid #dee2e6;
+    }
+
+    .signature-section {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 50px;
+    }
+
+    .signature-box {
+      text-align: center;
+      width: 45%;
+    }
+
+    .signature-line {
+      border-top: 2px solid #333;
+      margin-bottom: 5px;
+      padding-top: 5px;
+    }
+
+    .print-info {
+      text-align: center;
+      font-size: 12px;
+      color: #999;
+      margin-top: 20px;
+    }
+
+    @media print {
+      body {
+        padding: 0;
+      }
+
+      .print-container {
+        border: none;
+        padding: 0;
+      }
+
+      .no-print {
+        display: none;
+      }
+    }
+
+    .cost-highlight {
+      background: #fff3cd;
+      padding: 10px;
+      border-radius: 4px;
+      border-left: 4px solid #ffc107;
+      margin-top: 10px;
+    }
+
+    .print-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #2d6a4f;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .print-btn:hover {
+      background: #1b4332;
+    }
+  </style>
+</head>
+<body>
+  <button class="print-btn no-print" onclick="window.print()">
+    <i class="fas fa-print"></i> Print Treatment
+  </button>
+
+  <div class="print-container">
+    <!-- Header -->
+    <div class="header">
+      <div class="clinic-name">PETMATE VETERINARY CLINIC</div>
+      <div class="clinic-subtitle">Veterinary Care & Services</div>
+      <div class="doc-type">TREATMENT RECORD (Tx)</div>
+    </div>
+
+    <!-- Patient Information -->
+    <div class="section">
+      <div class="section-title">Patient Information</div>
+      <div class="info-grid">
+        <div class="info-label">Patient Name:</div>
+        <div class="info-value"><strong><%= patient.name %></strong></div>
+
+        <div class="info-label">Species:</div>
+        <div class="info-value"><%= patient.species %></div>
+
+        <div class="info-label">Breed:</div>
+        <div class="info-value"><%= patient.breed || 'Not specified' %></div>
+
+        <div class="info-label">Weight:</div>
+        <div class="info-value"><%= patient.weight ? patient.weight + ' kg' : 'Not recorded' %></div>
+
+        <div class="info-label">Owner:</div>
+        <div class="info-value"><%= client.name %></div>
+
+        <div class="info-label">Contact:</div>
+        <div class="info-value"><%= client.phone || client.email || 'Not provided' %></div>
+      </div>
+    </div>
+
+    <!-- Treatment Information -->
+    <div class="section">
+      <div class="section-title">Treatment Details</div>
+      <div class="treatment-details">
+        <div class="treatment-row">
+          <div class="info-label">Treatment Type:</div>
+          <div class="info-value"><strong><%= treatment.treatmentType %></strong></div>
+        </div>
+
+        <% if (treatment.medication) { %>
+        <div class="treatment-row">
+          <div class="info-label">Medication:</div>
+          <div class="info-value"><%= treatment.medication %></div>
+        </div>
+        <% } %>
+
+        <% if (treatment.dosage) { %>
+        <div class="treatment-row">
+          <div class="info-label">Dosage:</div>
+          <div class="info-value"><%= treatment.dosage %></div>
+        </div>
+        <% } %>
+
+        <% if (treatment.duration) { %>
+        <div class="treatment-row">
+          <div class="info-label">Duration:</div>
+          <div class="info-value"><%= treatment.duration %></div>
+        </div>
+        <% } %>
+
+        <div class="treatment-row">
+          <div class="info-label">Date:</div>
+          <div class="info-value"><%= new Date(treatment.createdAt).toLocaleDateString() %></div>
+        </div>
+      </div>
+
+      <% if (treatment.cost > 0) { %>
+      <div class="cost-highlight">
+        <div class="info-grid">
+          <div class="info-label">Treatment Cost:</div>
+          <div class="info-value"><strong>₱<%= treatment.cost.toFixed(2) %></strong></div>
+        </div>
+      </div>
+      <% } %>
+    </div>
+
+    <!-- Diagnosis Reference -->
+    <div class="section">
+      <div class="section-title">Diagnosis Reference</div>
+      <div class="info-grid">
+        <div class="info-label">Diagnosis:</div>
+        <div class="info-value"><%= diagnosis.diagnosisDetails %></div>
+
+        <% if (diagnosis.remarks) { %>
+        <div class="info-label">Remarks:</div>
+        <div class="info-value"><%= diagnosis.remarks %></div>
+        <% } %>
+
+        <div class="info-label">Diagnosed By:</div>
+        <div class="info-value">Dr. <%= doctor.fullName %></div>
+      </div>
+    </div>
+
+    <!-- Treatment Notes -->
+    <% if (treatment.notes) { %>
+    <div class="section">
+      <div class="section-title">Treatment Notes</div>
+      <div class="notes-box"><%= treatment.notes %></div>
+    </div>
+    <% } %>
+
+    <!-- Footer -->
+    <div class="footer">
+      <div class="signature-section">
+        <div class="signature-box">
+          <div class="signature-line">
+            <strong>Dr. <%= doctor.fullName %></strong>
+          </div>
+          <div style="font-size: 12px; color: #666;">Veterinarian</div>
+        </div>
+
+        <div class="signature-box">
+          <div class="signature-line">
+            <strong>Date</strong>
+          </div>
+          <div style="font-size: 12px; color: #666;"><%= new Date().toLocaleDateString() %></div>
+        </div>
+      </div>
+
+      <div class="print-info">
+        This is an official treatment record from Petmate Veterinary Clinic<br>
+        Printed on: <%= new Date().toLocaleString() %>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Auto-print on load (optional)
+    // window.onload = function() { window.print(); }
+  </script>
+</body>
+</html>

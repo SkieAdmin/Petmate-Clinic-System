@@ -1,67 +1,596 @@
-<div class="page-header">
-  <h2><i class="fas fa-home"></i> Dashboard</h2>
-  <p>Welcome to the Veterinary Clinic Management System</p>
-</div>
-
-<!-- Stats Cards -->
-<div class="stats-grid" id="statsGrid">
-  <div class="stat-card">
-    <div class="stat-label">Total Clients</div>
-    <div class="stat-value" id="clientCount">-</div>
+<div class="page-header dashboard-header">
+  <div>
+    <h2><i class="fas fa-home"></i> Dashboard</h2>
+    <p>Welcome back, <%= user.fullName || user.email.split('@')[0] %>!</p>
   </div>
-  <div class="stat-card">
-    <div class="stat-label">Total Patients</div>
-    <div class="stat-value" id="patientCount">-</div>
-  </div>
-  <div class="stat-card success">
-    <div class="stat-label">Upcoming Appointments</div>
-    <div class="stat-value" id="upcomingCount">-</div>
-  </div>
-  <div class="stat-card warning">
-    <div class="stat-label">Low Stock Items</div>
-    <div class="stat-value" id="lowStockCount">-</div>
+  <div class="header-date">
+    <i class="far fa-calendar-alt"></i>
+    <span id="currentDate"></span>
   </div>
 </div>
 
-<!-- Revenue Cards -->
-<div class="stats-grid">
-  <div class="stat-card">
-    <div class="stat-label">Monthly Revenue</div>
-    <div class="stat-value" id="monthlyRevenue">$0.00</div>
+<!-- Quick Stats Grid -->
+<div class="dashboard-stats">
+  <div class="stat-card-modern" id="clientCard">
+    <div class="stat-icon clients">
+      <i class="fas fa-users"></i>
+    </div>
+    <div class="stat-info">
+      <div class="stat-label">Total Clients</div>
+      <div class="stat-value" id="clientCount">-</div>
+      <div class="stat-trend">
+        <i class="fas fa-arrow-up"></i>
+        <span id="clientTrend">Loading...</span>
+      </div>
+    </div>
   </div>
-  <div class="stat-card">
-    <div class="stat-label">Total Revenue</div>
-    <div class="stat-value" id="totalRevenue">$0.00</div>
+
+  <div class="stat-card-modern" id="patientCard">
+    <div class="stat-icon patients">
+      <i class="fas fa-paw"></i>
+    </div>
+    <div class="stat-info">
+      <div class="stat-label">Total Patients</div>
+      <div class="stat-value" id="patientCount">-</div>
+      <div class="stat-trend">
+        <i class="fas fa-arrow-up"></i>
+        <span id="patientTrend">Loading...</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="stat-card-modern success" id="appointmentCard">
+    <div class="stat-icon appointments">
+      <i class="fas fa-calendar-check"></i>
+    </div>
+    <div class="stat-info">
+      <div class="stat-label">Upcoming Appointments</div>
+      <div class="stat-value" id="upcomingCount">-</div>
+      <div class="stat-trend success">
+        <i class="fas fa-clock"></i>
+        <span id="appointmentTrend">This week</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="stat-card-modern warning" id="stockCard">
+    <div class="stat-icon inventory">
+      <i class="fas fa-boxes"></i>
+    </div>
+    <div class="stat-info">
+      <div class="stat-label">Low Stock Items</div>
+      <div class="stat-value" id="lowStockCount">-</div>
+      <div class="stat-trend warning">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span id="stockTrend">Needs attention</span>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- Today's Appointments -->
-<div class="card">
+<!-- Revenue & Quick Actions Section -->
+<div class="dashboard-row">
+  <!-- Revenue Cards -->
+  <div class="dashboard-section revenue-section">
+    <h3 class="section-title"><i class="fas fa-chart-line"></i> Revenue Overview</h3>
+    <div class="revenue-cards">
+      <div class="revenue-card">
+        <div class="revenue-icon monthly">
+          <i class="fas fa-calendar-alt"></i>
+        </div>
+        <div class="revenue-info">
+          <div class="revenue-label">This Month</div>
+          <div class="revenue-value" id="monthlyRevenue">₱0.00</div>
+        </div>
+      </div>
+      <div class="revenue-card">
+        <div class="revenue-icon total">
+          <i class="fas fa-coins"></i>
+        </div>
+        <div class="revenue-info">
+          <div class="revenue-label">Total Revenue</div>
+          <div class="revenue-value" id="totalRevenue">₱0.00</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="dashboard-section quick-actions-section">
+    <h3 class="section-title"><i class="fas fa-bolt"></i> Quick Actions</h3>
+    <div class="quick-actions">
+      <% if (user.role !== 'Doctor') { %>
+      <a href="/clients" class="quick-action-btn">
+        <i class="fas fa-user-plus"></i>
+        <span>Add Client</span>
+      </a>
+      <% } %>
+      <% if (user.role !== 'Frontdesk') { %>
+      <a href="/patients" class="quick-action-btn">
+        <i class="fas fa-paw"></i>
+        <span>Add Patient</span>
+      </a>
+      <% } %>
+      <a href="/appointments" class="quick-action-btn">
+        <i class="fas fa-calendar-plus"></i>
+        <span>New Appointment</span>
+      </a>
+      <% if (user.role === 'Admin') { %>
+      <a href="/invoices" class="quick-action-btn">
+        <i class="fas fa-file-invoice"></i>
+        <span>Create Invoice</span>
+      </a>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<!-- Today's Schedule -->
+<div class="card dashboard-card">
   <div class="card-header">
-    <h3 class="card-title">Today's Appointments</h3>
-    <a href="/appointments" class="btn btn-secondary btn-sm">View All</a>
+    <h3 class="card-title"><i class="fas fa-calendar-day"></i> Today's Appointments</h3>
+    <a href="/appointments" class="btn btn-secondary btn-sm">
+      <i class="fas fa-external-link-alt"></i> View All
+    </a>
   </div>
-  <div class="table-container">
-    <table>
-      <thead>
-        <tr>
-          <th>Time</th>
-          <th>Patient</th>
-          <th>Owner</th>
-          <th>Reason</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody id="todayAppointments">
-        <tr>
-          <td colspan="5" class="text-center">Loading...</td>
-        </tr>
-      </tbody>
-    </table>
+  <div class="appointments-container" id="appointmentsContainer">
+    <div class="appointments-loading">
+      <div class="spinner"></div>
+      <p>Loading appointments...</p>
+    </div>
   </div>
 </div>
+
+<!-- Low Stock Alert (Admin/Doctor/Employee only) -->
+<% if (user.role !== 'Frontdesk') { %>
+<div class="card dashboard-card" id="lowStockSection" style="display: none;">
+  <div class="card-header">
+    <h3 class="card-title"><i class="fas fa-exclamation-triangle"></i> Low Stock Alert</h3>
+    <a href="/inventory" class="btn btn-warning btn-sm">
+      <i class="fas fa-boxes"></i> Manage Inventory
+    </a>
+  </div>
+  <div class="low-stock-container" id="lowStockContainer">
+    <!-- Will be populated by JavaScript -->
+  </div>
+</div>
+<% } %>
+
+<style>
+/* Dashboard Enhancements */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.header-date {
+  background: linear-gradient(135deg, var(--primary-green), var(--light-green));
+  color: white;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(45, 106, 79, 0.2);
+}
+
+.header-date i {
+  margin-right: 0.5rem;
+}
+
+/* Modern Stat Cards */
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card-modern {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+  display: flex;
+  gap: 1.25rem;
+  align-items: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-left: 4px solid var(--primary-green);
+}
+
+.stat-card-modern:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+}
+
+.stat-card-modern.success {
+  border-left-color: var(--success);
+}
+
+.stat-card-modern.warning {
+  border-left-color: var(--warning);
+}
+
+.stat-icon {
+  width: 70px;
+  height: 70px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.stat-icon.clients {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.stat-icon.patients {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+}
+
+.stat-icon.appointments {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: white;
+}
+
+.stat-icon.inventory {
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  color: white;
+}
+
+.stat-info {
+  flex: 1;
+}
+
+.stat-info .stat-label {
+  font-size: 0.875rem;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.stat-info .stat-value {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.stat-trend {
+  font-size: 0.8rem;
+  color: var(--text-light);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.stat-trend i {
+  font-size: 0.75rem;
+}
+
+.stat-trend.success {
+  color: var(--success);
+}
+
+.stat-trend.warning {
+  color: var(--warning);
+}
+
+/* Dashboard Row */
+.dashboard-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.dashboard-section {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+}
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--primary-green);
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Revenue Cards */
+.revenue-cards {
+  display: grid;
+  gap: 1rem;
+}
+
+.revenue-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: var(--light-bg);
+  border-radius: 8px;
+  border: 2px solid var(--border-color);
+  transition: all 0.3s ease;
+}
+
+.revenue-card:hover {
+  border-color: var(--light-green);
+  background: white;
+}
+
+.revenue-icon {
+  width: 55px;
+  height: 55px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: white;
+}
+
+.revenue-icon.monthly {
+  background: linear-gradient(135deg, #2d6a4f, #52b788);
+}
+
+.revenue-icon.total {
+  background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+}
+
+.revenue-label {
+  font-size: 0.85rem;
+  color: var(--text-light);
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+}
+
+.revenue-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--primary-green);
+}
+
+/* Quick Actions */
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.quick-action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: linear-gradient(135deg, var(--primary-green), var(--light-green));
+  color: white;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  gap: 0.5rem;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(45, 106, 79, 0.2);
+}
+
+.quick-action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(45, 106, 79, 0.3);
+}
+
+.quick-action-btn i {
+  font-size: 1.5rem;
+}
+
+.quick-action-btn span {
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+/* Appointments Container */
+.appointments-container {
+  min-height: 200px;
+}
+
+.appointments-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  color: var(--text-light);
+}
+
+.appointment-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-left: 4px solid var(--primary-green);
+  background: var(--light-bg);
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+  transition: all 0.3s ease;
+}
+
+.appointment-item:hover {
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.appointment-time {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-green);
+  color: white;
+  padding: 0.75rem;
+  border-radius: 8px;
+  min-width: 70px;
+}
+
+.appointment-time-hour {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.appointment-time-period {
+  font-size: 0.75rem;
+  opacity: 0.9;
+}
+
+.appointment-details {
+  flex: 1;
+}
+
+.appointment-patient {
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 0.25rem;
+}
+
+.appointment-owner {
+  font-size: 0.85rem;
+  color: var(--text-light);
+  margin-bottom: 0.25rem;
+}
+
+.appointment-reason {
+  font-size: 0.85rem;
+  color: var(--text-light);
+}
+
+.appointment-status {
+  min-width: 100px;
+  text-align: right;
+}
+
+.no-appointments {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-light);
+}
+
+.no-appointments i {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.3;
+}
+
+/* Low Stock Items */
+.low-stock-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: var(--light-bg);
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+  border-left: 4px solid var(--warning);
+}
+
+.low-stock-info {
+  flex: 1;
+}
+
+.low-stock-name {
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 0.25rem;
+}
+
+.low-stock-quantity {
+  font-size: 0.85rem;
+  color: var(--warning);
+  font-weight: 600;
+}
+
+/* Tablet Responsive (768px - 1024px) */
+@media (max-width: 1024px) and (min-width: 768px) {
+  .dashboard-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dashboard-row {
+    grid-template-columns: 1fr;
+  }
+
+  .quick-actions {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header-date {
+    width: 100%;
+    text-align: center;
+  }
+
+  .dashboard-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-card-modern {
+    padding: 1.25rem;
+  }
+
+  .stat-icon {
+    width: 60px;
+    height: 60px;
+    font-size: 1.75rem;
+  }
+
+  .stat-info .stat-value {
+    font-size: 1.75rem;
+  }
+
+  .dashboard-row {
+    grid-template-columns: 1fr;
+  }
+
+  .quick-actions {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .appointment-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .appointment-status {
+    width: 100%;
+    text-align: left;
+  }
+}
+</style>
 
 <script>
+  // Set current date
+  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', options);
+
   // Fetch dashboard data
   async function loadDashboard() {
     try {
@@ -76,38 +605,107 @@
         document.getElementById('patientCount').textContent = data.patients.total;
         document.getElementById('upcomingCount').textContent = data.appointments.upcoming;
         document.getElementById('lowStockCount').textContent = data.inventory.lowStock;
-        document.getElementById('monthlyRevenue').textContent = '$' + data.revenue.monthly.toFixed(2);
-        document.getElementById('totalRevenue').textContent = '$' + data.revenue.total.toFixed(2);
+        document.getElementById('monthlyRevenue').textContent = '₱' + data.revenue.monthly.toFixed(2);
+        document.getElementById('totalRevenue').textContent = '₱' + data.revenue.total.toFixed(2);
+
+        // Update trends
+        document.getElementById('clientTrend').textContent = `${data.clients.total} total`;
+        document.getElementById('patientTrend').textContent = `${data.patients.total} registered`;
 
         // Update today's appointments
-        const tbody = document.getElementById('todayAppointments');
+        const container = document.getElementById('appointmentsContainer');
         if (data.appointments.todayList.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="5" class="text-center">No appointments today</td></tr>';
+          container.innerHTML = `
+            <div class="no-appointments">
+              <i class="fas fa-calendar-times"></i>
+              <p>No appointments scheduled for today</p>
+            </div>
+          `;
         } else {
-          tbody.innerHTML = data.appointments.todayList.map(apt => {
-            const time = new Date(apt.dateTime).toLocaleTimeString('en-US', {
-              hour: '2-digit',
-              minute: '2-digit'
-            });
+          container.innerHTML = data.appointments.todayList.map(apt => {
+            const time = new Date(apt.dateTime);
+            const hour = time.getHours() % 12 || 12;
+            const minutes = time.getMinutes().toString().padStart(2, '0');
+            const period = time.getHours() >= 12 ? 'PM' : 'AM';
             const statusBadge = apt.status === 'Completed' ? 'badge-success' :
                                apt.status === 'Canceled' ? 'badge-danger' : 'badge-info';
             return `
-              <tr>
-                <td>${time}</td>
-                <td>${apt.patient.name}</td>
-                <td>${apt.patient.client.name}</td>
-                <td>${apt.reason || '-'}</td>
-                <td><span class="badge ${statusBadge}">${apt.status}</span></td>
-              </tr>
+              <div class="appointment-item">
+                <div class="appointment-time">
+                  <div class="appointment-time-hour">${hour}:${minutes}</div>
+                  <div class="appointment-time-period">${period}</div>
+                </div>
+                <div class="appointment-details">
+                  <div class="appointment-patient">
+                    <i class="fas fa-paw"></i> ${apt.patient.name}
+                  </div>
+                  <div class="appointment-owner">
+                    <i class="fas fa-user"></i> ${apt.patient.client.name}
+                  </div>
+                  <div class="appointment-reason">
+                    <i class="fas fa-notes-medical"></i> ${apt.reason || 'General checkup'}
+                  </div>
+                </div>
+                <div class="appointment-status">
+                  <span class="badge ${statusBadge}">${apt.status}</span>
+                </div>
+              </div>
             `;
           }).join('');
+        }
+
+        // Load low stock items if user has access
+        const userRole = '<%= user.role %>';
+        if (userRole !== 'Frontdesk' && data.inventory.lowStock > 0) {
+          loadLowStockItems();
         }
       }
     } catch (error) {
       console.error('Error loading dashboard:', error);
+      document.getElementById('appointmentsContainer').innerHTML = `
+        <div class="no-appointments">
+          <i class="fas fa-exclamation-triangle"></i>
+          <p>Error loading dashboard data</p>
+        </div>
+      `;
+    }
+  }
+
+  // Load low stock items
+  async function loadLowStockItems() {
+    try {
+      const response = await fetch('/api/items?limit=5');
+      const result = await response.json();
+
+      if (result.success && result.data.length > 0) {
+        const lowStock = result.data.filter(item => item.quantity <= 10);
+
+        if (lowStock.length > 0) {
+          document.getElementById('lowStockSection').style.display = 'block';
+          const container = document.getElementById('lowStockContainer');
+
+          container.innerHTML = lowStock.map(item => `
+            <div class="low-stock-item">
+              <div class="low-stock-info">
+                <div class="low-stock-name">
+                  <i class="fas fa-box"></i> ${item.name}
+                </div>
+                <div class="low-stock-quantity">
+                  <i class="fas fa-exclamation-circle"></i> Only ${item.quantity} ${item.unit || 'units'} remaining
+                </div>
+              </div>
+            </div>
+          `).join('');
+        }
+      }
+    } catch (error) {
+      console.error('Error loading low stock items:', error);
     }
   }
 
   // Load dashboard on page load
   loadDashboard();
+
+  // Refresh every 5 minutes
+  setInterval(loadDashboard, 300000);
 </script>

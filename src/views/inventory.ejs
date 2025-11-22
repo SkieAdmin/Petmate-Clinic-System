@@ -45,6 +45,112 @@
   </div>
 </div>
 
+<!-- Add/Edit Item Modal -->
+<div id="itemModal" class="modal hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: none; align-items: center; justify-content: center;">
+  <div class="card" style="width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto;">
+    <div class="card-header">
+      <h3 class="card-title" id="modalTitle">Add Item</h3>
+      <button onclick="closeModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+    </div>
+    <form id="itemForm" onsubmit="saveItem(event)">
+      <input type="hidden" id="itemId">
+      <div class="form-group">
+        <label class="form-label">Name *</label>
+        <input type="text" id="itemName" class="form-control" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea id="itemDescription" class="form-control" rows="3"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Type *</label>
+        <select id="itemType" class="form-control" required>
+          <option value="Product">Product</option>
+          <option value="Service">Service</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Quantity *</label>
+          <input type="number" id="itemQuantity" class="form-control" min="0" value="0" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Min. Quantity *</label>
+          <input type="number" id="itemMinQuantity" class="form-control" min="0" value="5" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Price (₱) *</label>
+        <input type="number" id="itemPrice" class="form-control" step="0.01" min="0" required>
+      </div>
+
+      <div class="flex gap-1">
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-save"></i> Save
+        </button>
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">
+          <i class="fas fa-times"></i> Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Adjust Stock Modal -->
+<div id="adjustStockModal" class="modal hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2001; display: none; align-items: center; justify-content: center;">
+  <div class="card" style="width: 90%; max-width: 500px;">
+    <div class="card-header">
+      <h3 class="card-title">Adjust Stock</h3>
+      <button onclick="closeAdjustStockModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+    </div>
+    <div style="padding: 20px;">
+      <input type="hidden" id="adjustItemId">
+      <div class="form-group">
+        <label class="form-label">Item</label>
+        <input type="text" id="adjustItemName" class="form-control" readonly>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Current Stock</label>
+        <input type="text" id="adjustCurrentStock" class="form-control" readonly>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Adjustment Type *</label>
+        <select id="adjustmentType" class="form-control" required onchange="updateAdjustmentLabel()">
+          <option value="add">Add Stock (Restock)</option>
+          <option value="remove">Remove Stock (Sold/Used)</option>
+          <option value="set">Set Exact Quantity</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" id="adjustmentLabel">Quantity to Add *</label>
+        <input type="number" id="adjustmentQuantity" class="form-control" min="0" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea id="adjustmentNotes" class="form-control" rows="2" placeholder="Reason for adjustment..."></textarea>
+      </div>
+
+      <div class="flex gap-1">
+        <button type="button" class="btn btn-primary" onclick="saveStockAdjustment()">
+          <i class="fas fa-save"></i> Save Adjustment
+        </button>
+        <button type="button" class="btn btn-secondary" onclick="closeAdjustStockModal()">
+          <i class="fas fa-times"></i> Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
   async function loadItems() {
     const search = document.getElementById('searchInput').value;
@@ -97,9 +203,12 @@
             <td><span class="badge ${item.itemType === 'Product' ? 'badge-info' : 'badge-success'}">${item.itemType}</span></td>
             <td class="${quantityClass}">${item.quantity}</td>
             <td>${item.minQuantity}</td>
-            <td>$${item.price.toFixed(2)}</td>
+            <td>₱${item.price.toFixed(2)}</td>
             <td>${statusIcon}</td>
             <td>
+              <button class="btn btn-sm btn-info" onclick="showAdjustStockModal(${item.id}, '${item.name}', ${item.quantity})" title="Adjust Stock">
+                <i class="fas fa-boxes"></i> Stock
+              </button>
               <button class="btn btn-sm btn-secondary" onclick="editItem(${item.id})">
                 <i class="fas fa-edit"></i> Edit
               </button>
@@ -114,11 +223,154 @@
   }
 
   function showAddModal() {
-    alert('Add Item form - Name, Type, Quantity, Min Quantity, Price');
+    document.getElementById('modalTitle').textContent = 'Add Item';
+    document.getElementById('itemForm').reset();
+    document.getElementById('itemId').value = '';
+    document.getElementById('itemModal').classList.remove('hidden');
+    document.getElementById('itemModal').style.display = 'flex';
   }
 
-  function editItem(id) {
-    alert(`Edit item ${id}`);
+  async function editItem(id) {
+    try {
+      const response = await fetch(`/api/items/${id}`);
+      const result = await response.json();
+
+      if (result.success) {
+        const item = result.data;
+        document.getElementById('modalTitle').textContent = 'Edit Item';
+        document.getElementById('itemId').value = item.id;
+        document.getElementById('itemName').value = item.name;
+        document.getElementById('itemDescription').value = item.description || '';
+        document.getElementById('itemType').value = item.itemType;
+        document.getElementById('itemQuantity').value = item.quantity;
+        document.getElementById('itemMinQuantity').value = item.minQuantity;
+        document.getElementById('itemPrice').value = item.price;
+        document.getElementById('itemModal').classList.remove('hidden');
+        document.getElementById('itemModal').style.display = 'flex';
+      }
+    } catch (error) {
+      console.error('Error loading item:', error);
+      alert('Error loading item details');
+    }
+  }
+
+  function closeModal() {
+    document.getElementById('itemModal').classList.add('hidden');
+    document.getElementById('itemModal').style.display = 'none';
+  }
+
+  async function saveItem(event) {
+    event.preventDefault();
+
+    const id = document.getElementById('itemId').value;
+    const data = {
+      name: document.getElementById('itemName').value,
+      description: document.getElementById('itemDescription').value || null,
+      itemType: document.getElementById('itemType').value,
+      quantity: parseInt(document.getElementById('itemQuantity').value),
+      minQuantity: parseInt(document.getElementById('itemMinQuantity').value),
+      price: parseFloat(document.getElementById('itemPrice').value),
+    };
+
+    const url = id ? `/api/items/${id}` : '/api/items';
+    const method = id ? 'PUT' : 'POST';
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert(result.message);
+        closeModal();
+        loadItems();
+      } else {
+        alert('Error: ' + result.message);
+      }
+    } catch (error) {
+      console.error('Error saving item:', error);
+      alert('Error saving item');
+    }
+  }
+
+  function showAdjustStockModal(itemId, itemName, currentStock) {
+    document.getElementById('adjustItemId').value = itemId;
+    document.getElementById('adjustItemName').value = itemName;
+    document.getElementById('adjustCurrentStock').value = currentStock;
+    document.getElementById('adjustmentType').value = 'add';
+    document.getElementById('adjustmentQuantity').value = '';
+    document.getElementById('adjustmentNotes').value = '';
+    document.getElementById('adjustmentLabel').textContent = 'Quantity to Add *';
+    document.getElementById('adjustStockModal').classList.remove('hidden');
+    document.getElementById('adjustStockModal').style.display = 'flex';
+  }
+
+  function closeAdjustStockModal() {
+    document.getElementById('adjustStockModal').classList.add('hidden');
+    document.getElementById('adjustStockModal').style.display = 'none';
+  }
+
+  function updateAdjustmentLabel() {
+    const type = document.getElementById('adjustmentType').value;
+    const label = document.getElementById('adjustmentLabel');
+
+    if (type === 'add') {
+      label.textContent = 'Quantity to Add *';
+    } else if (type === 'remove') {
+      label.textContent = 'Quantity to Remove *';
+    } else {
+      label.textContent = 'New Quantity *';
+    }
+  }
+
+  async function saveStockAdjustment() {
+    const itemId = document.getElementById('adjustItemId').value;
+    const type = document.getElementById('adjustmentType').value;
+    const quantity = parseInt(document.getElementById('adjustmentQuantity').value);
+    const currentStock = parseInt(document.getElementById('adjustCurrentStock').value);
+
+    if (!quantity && quantity !== 0) {
+      alert('Please enter a valid quantity');
+      return;
+    }
+
+    let newQuantity;
+    if (type === 'add') {
+      newQuantity = currentStock + quantity;
+    } else if (type === 'remove') {
+      newQuantity = currentStock - quantity;
+      if (newQuantity < 0) {
+        alert('Cannot remove more than current stock');
+        return;
+      }
+    } else {
+      newQuantity = quantity;
+    }
+
+    try {
+      const response = await fetch(`/api/items/${itemId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quantity: newQuantity }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert(`Stock adjusted successfully! New quantity: ${newQuantity}`);
+        closeAdjustStockModal();
+        loadItems();
+      } else {
+        alert('Error: ' + result.message);
+      }
+    } catch (error) {
+      console.error('Error adjusting stock:', error);
+      alert('Error adjusting stock');
+    }
   }
 
   async function deleteItem(id) {

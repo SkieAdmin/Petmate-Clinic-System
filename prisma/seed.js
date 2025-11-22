@@ -40,9 +40,9 @@ async function main() {
       name: 'Doctor',
       description: 'Veterinarian with access to patient care features',
       permissions: JSON.stringify([
-        'clients.view', 'patients.view', 'patients.edit',
+        'patients.view', 'patients.edit',
         'appointments.view', 'appointments.edit',
-        'inventory.view', 'invoices.view', 'reports.view'
+        'inventory.view'
       ]),
     },
   });
@@ -50,12 +50,10 @@ async function main() {
   const frontdeskRole = await prisma.role.create({
     data: {
       name: 'Frontdesk',
-      description: 'Front desk staff with scheduling and billing access',
+      description: 'Front desk staff with client and appointment management',
       permissions: JSON.stringify([
         'clients.view', 'clients.create', 'clients.edit',
-        'patients.view', 'patients.create', 'patients.edit',
-        'appointments.view', 'appointments.create', 'appointments.edit',
-        'invoices.view', 'invoices.create', 'invoices.edit'
+        'appointments.view', 'appointments.create', 'appointments.edit'
       ]),
     },
   });
@@ -83,6 +81,32 @@ async function main() {
       fullName: 'System Administrator',
       phone: '(555) 999-0000',
       roleId: adminRole.id,
+      isActive: true,
+    },
+  });
+
+  // Create doctor user (password: admin123)
+  await prisma.user.create({
+    data: {
+      username: 'doctor',
+      email: 'doctor@petmate.com',
+      password: hashedPassword,
+      fullName: 'Dr. Sarah Johnson',
+      phone: '(555) 888-0000',
+      roleId: doctorRole.id,
+      isActive: true,
+    },
+  });
+
+  // Create frontdesk user (password: admin123)
+  await prisma.user.create({
+    data: {
+      username: 'frontdesk',
+      email: 'frontdesk@petmate.com',
+      password: hashedPassword,
+      fullName: 'Maria Garcia',
+      phone: '(555) 777-0000',
+      roleId: frontdeskRole.id,
       isActive: true,
     },
   });

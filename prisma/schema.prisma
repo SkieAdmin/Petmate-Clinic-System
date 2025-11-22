@@ -192,6 +192,7 @@ model User {
   invoices        Invoice[]     @relation("PreparedByUser")
   payments        Payment[]     @relation("ReceivedByUser")
   admissions      Admission[]   @relation("AdmittedByUser")
+  auditLogs       AuditLog[]    @relation("AuditLogUser")
 
   @@index([roleId])
   @@index([email])
@@ -397,4 +398,30 @@ model BookingAttempt {
   @@index([fingerprint])
   @@index([createdAt])
   @@map("booking_attempts")
+}
+
+// Audit Log Model (Track all system actions)
+model AuditLog {
+  id              Int      @id @default(autoincrement())
+  userId          Int?     // User who performed the action (null for system actions)
+  action          String   // e.g., "CREATE", "UPDATE", "DELETE", "LOGIN", "LOGOUT"
+  module          String   // e.g., "Client", "Patient", "Appointment", "Invoice", "User"
+  recordId        Int?     // ID of the affected record
+  recordName      String?  // Name/description of the affected record
+  changes         String?  @db.Text // JSON string of before/after changes
+  ipAddress       String?
+  userAgent       String?  @db.Text
+  status          String   @default("SUCCESS") // SUCCESS, FAILED, ERROR
+  errorMessage    String?  @db.Text
+  createdAt       DateTime @default(now())
+
+  // Relations
+  user            User?    @relation("AuditLogUser", fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+  @@index([module])
+  @@index([createdAt])
+  @@index([status])
+  @@map("audit_logs")
 }

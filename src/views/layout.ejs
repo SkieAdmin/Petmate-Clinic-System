@@ -15,27 +15,38 @@
         <h1><i class="fas fa-paw"></i> Petmate Clinic</h1>
       </div>
       <nav class="sidebar-nav">
-        <a href="/" class="nav-item <%= title === 'Dashboard' ? 'active' : '' %>">
+        <a href="/dashboard" class="nav-item <%= title === 'Dashboard' ? 'active' : '' %>">
           <i class="fas fa-home"></i> Dashboard
         </a>
+        <% if (typeof user !== 'undefined' && user.role !== 'Doctor') { %>
         <a href="/clients" class="nav-item <%= title === 'Clients' ? 'active' : '' %>">
           <i class="fas fa-users"></i> Clients
         </a>
+        <% } %>
+        <% if (typeof user !== 'undefined' && user.role !== 'Frontdesk') { %>
         <a href="/patients" class="nav-item <%= title === 'Patients' ? 'active' : '' %>">
           <i class="fas fa-paw"></i> Patients
         </a>
+        <% } %>
         <a href="/appointments" class="nav-item <%= title === 'Appointments' ? 'active' : '' %>">
           <i class="fas fa-calendar-alt"></i> Appointments
         </a>
+        <% if (typeof user !== 'undefined' && (user.role === 'Admin' || user.role === 'Doctor' || user.role === 'Employee')) { %>
         <a href="/inventory" class="nav-item <%= title === 'Inventory' ? 'active' : '' %>">
           <i class="fas fa-boxes"></i> Inventory
         </a>
+        <% } %>
+        <% if (typeof user !== 'undefined' && user.role === 'Admin') { %>
         <a href="/invoices" class="nav-item <%= title === 'Invoices' ? 'active' : '' %>">
           <i class="fas fa-file-invoice-dollar"></i> Invoices
         </a>
         <a href="/reports" class="nav-item <%= title === 'Reports' ? 'active' : '' %>">
           <i class="fas fa-chart-bar"></i> Reports
         </a>
+        <a href="/audit-logs" class="nav-item <%= title === 'Audit Logs' ? 'active' : '' %>">
+          <i class="fas fa-history"></i> Audit Logs
+        </a>
+        <% } %>
       </nav>
 
       <!-- User Profile Section -->

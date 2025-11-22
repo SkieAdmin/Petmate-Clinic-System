@@ -1,0 +1,448 @@
+<div class="page-header">
+  <h2><i class="fas fa-history"></i> Audit Logs</h2>
+  <p>Track all system activities and user actions</p>
+</div>
+
+<!-- Admin Access Check -->
+<% if (user.role !== 'Admin') { %>
+<div class="card">
+  <div style="padding: 3rem; text-align: center;">
+    <i class="fas fa-lock" style="font-size: 3rem; color: var(--danger); margin-bottom: 1rem;"></i>
+    <h3 style="color: var(--danger);">Access Denied</h3>
+    <p style="color: var(--text-light);">Only administrators can access audit logs.</p>
+  </div>
+</div>
+<% } else { %>
+
+<!-- Statistics -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">Total Actions</div>
+    <div class="stat-value" id="totalActions">-</div>
+  </div>
+  <div class="stat-card success">
+    <div class="stat-label">Successful</div>
+    <div class="stat-value" id="successfulActions">-</div>
+  </div>
+  <div class="stat-card" style="border-color: var(--danger);">
+    <div class="stat-label">Failed</div>
+    <div class="stat-value" style="color: var(--danger);" id="failedActions">-</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Unique Users</div>
+    <div class="stat-value" id="uniqueUsers">-</div>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">Filters</h3>
+    <button class="btn btn-secondary" onclick="resetFilters()">
+      <i class="fas fa-redo"></i> Reset
+    </button>
+  </div>
+  <div style="padding: 1.5rem;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+      <div>
+        <label class="form-label">Action</label>
+        <select id="filterAction" class="form-control" onchange="loadAuditLogs()">
+          <option value="">All Actions</option>
+          <option value="CREATE">Create</option>
+          <option value="UPDATE">Update</option>
+          <option value="DELETE">Delete</option>
+          <option value="VIEW">View</option>
+          <option value="LOGIN">Login</option>
+          <option value="LOGOUT">Logout</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Module</label>
+        <select id="filterModule" class="form-control" onchange="loadAuditLogs()">
+          <option value="">All Modules</option>
+          <option value="Client">Client</option>
+          <option value="Patient">Patient</option>
+          <option value="Appointment">Appointment</option>
+          <option value="Invoice">Invoice</option>
+          <option value="Item">Item</option>
+          <option value="User">User</option>
+          <option value="Treatment">Treatment</option>
+          <option value="Prescription">Prescription</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Status</label>
+        <select id="filterStatus" class="form-control" onchange="loadAuditLogs()">
+          <option value="">All Statuses</option>
+          <option value="SUCCESS">Success</option>
+          <option value="FAILED">Failed</option>
+          <option value="ERROR">Error</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Start Date</label>
+        <input type="date" id="filterStartDate" class="form-control" onchange="loadAuditLogs()">
+      </div>
+      <div>
+        <label class="form-label">End Date</label>
+        <input type="date" id="filterEndDate" class="form-control" onchange="loadAuditLogs()">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Audit Logs Table -->
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">Audit Log Entries</h3>
+    <div class="flex gap-1">
+      <button class="btn btn-secondary" onclick="loadAuditLogs()">
+        <i class="fas fa-sync-alt"></i> Refresh
+      </button>
+      <button class="btn btn-primary" onclick="exportLogs()">
+        <i class="fas fa-download"></i> Export
+      </button>
+    </div>
+  </div>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Timestamp</th>
+          <th>User</th>
+          <th>Action</th>
+          <th>Module</th>
+          <th>Record</th>
+          <th>Status</th>
+          <th>IP Address</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="auditLogsTable">
+        <tr>
+          <td colspan="9" class="text-center">
+            <div class="spinner"></div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="card-footer">
+    <div class="pagination" id="pagination"></div>
+  </div>
+</div>
+
+<!-- Details Modal -->
+<div id="detailsModal" class="modal">
+  <div class="modal-content" style="max-width: 800px;">
+    <div class="modal-header">
+      <h3 class="modal-title">Audit Log Details</h3>
+      <button class="modal-close" onclick="closeDetailsModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="detailsContent">
+      <!-- Content will be populated dynamically -->
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeDetailsModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentPage = 0;
+  const pageSize = 50;
+
+  async function loadStatistics() {
+    try {
+      const startDate = document.getElementById('filterStartDate').value;
+      const endDate = document.getElementById('filterEndDate').value;
+
+      let url = '/api/audit-logs/statistics';
+      const params = new URLSearchParams();
+      if (startDate) params.append('startDate', startDate);
+      if (endDate) params.append('endDate', endDate);
+      if (params.toString()) url += '?' + params.toString();
+
+      const response = await fetch(url);
+      const result = await response.json();
+
+      if (result.success) {
+        const stats = result.data;
+        document.getElementById('totalActions').textContent = stats.total;
+        document.getElementById('successfulActions').textContent = stats.byStatus.SUCCESS || 0;
+        document.getElementById('failedActions').textContent = (stats.byStatus.FAILED || 0) + (stats.byStatus.ERROR || 0);
+        document.getElementById('uniqueUsers').textContent = stats.uniqueUsers;
+      }
+    } catch (error) {
+      console.error('Error loading statistics:', error);
+    }
+  }
+
+  async function loadAuditLogs() {
+    const tbody = document.getElementById('auditLogsTable');
+    tbody.innerHTML = '<tr><td colspan="9" class="text-center"><div class="spinner"></div></td></tr>';
+
+    try {
+      const action = document.getElementById('filterAction').value;
+      const module = document.getElementById('filterModule').value;
+      const status = document.getElementById('filterStatus').value;
+      const startDate = document.getElementById('filterStartDate').value;
+      const endDate = document.getElementById('filterEndDate').value;
+
+      const params = new URLSearchParams();
+      if (action) params.append('action', action);
+      if (module) params.append('module', module);
+      if (status) params.append('status', status);
+      if (startDate) params.append('startDate', startDate);
+      if (endDate) params.append('endDate', endDate);
+      params.append('limit', pageSize);
+      params.append('offset', currentPage * pageSize);
+
+      const response = await fetch('/api/audit-logs?' + params.toString());
+      const result = await response.json();
+
+      if (result.success) {
+        if (result.data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="9" class="text-center">No audit logs found</td></tr>';
+        } else {
+          tbody.innerHTML = result.data.map(log => `
+            <tr>
+              <td>${log.id}</td>
+              <td>${new Date(log.createdAt).toLocaleString()}</td>
+              <td>${log.user ? log.user.fullName : '<span style="color: var(--text-light);">System</span>'}</td>
+              <td>
+                <span class="badge ${getActionBadgeClass(log.action)}">${log.action}</span>
+              </td>
+              <td>${log.module}</td>
+              <td>
+                ${log.recordName || ''}
+                ${log.recordId ? `<span style="color: var(--text-light); font-size: 0.85em;">(#${log.recordId})</span>` : ''}
+              </td>
+              <td>
+                <span class="badge ${getStatusBadgeClass(log.status)}">${log.status}</span>
+              </td>
+              <td style="font-family: monospace; font-size: 0.85em;">${log.ipAddress || '-'}</td>
+              <td>
+                <button class="btn-icon" onclick="viewDetails(${log.id})" title="View Details">
+                  <i class="fas fa-eye"></i>
+                </button>
+              </td>
+            </tr>
+          `).join('');
+        }
+
+        // Update pagination
+        updatePagination(result.data.length);
+      }
+    } catch (error) {
+      console.error('Error loading audit logs:', error);
+      tbody.innerHTML = '<tr><td colspan="9" class="text-center">Error loading data</td></tr>';
+    }
+
+    // Reload statistics
+    loadStatistics();
+  }
+
+  function getActionBadgeClass(action) {
+    const classes = {
+      'CREATE': 'badge-success',
+      'UPDATE': 'badge-warning',
+      'DELETE': 'badge-danger',
+      'VIEW': 'badge-info',
+      'LOGIN': 'badge-primary',
+      'LOGOUT': 'badge-secondary'
+    };
+    return classes[action] || 'badge-secondary';
+  }
+
+  function getStatusBadgeClass(status) {
+    const classes = {
+      'SUCCESS': 'badge-success',
+      'FAILED': 'badge-danger',
+      'ERROR': 'badge-danger'
+    };
+    return classes[status] || 'badge-secondary';
+  }
+
+  async function viewDetails(logId) {
+    try {
+      const response = await fetch(`/api/audit-logs/${logId}`);
+      const result = await response.json();
+
+      if (result.success) {
+        const log = result.data;
+        const changes = log.changes ? JSON.parse(log.changes) : null;
+
+        const detailsContent = document.getElementById('detailsContent');
+        detailsContent.innerHTML = `
+          <div style="display: grid; gap: 1.5rem;">
+            <div>
+              <h4 style="margin-bottom: 0.5rem; color: var(--primary-green);">General Information</h4>
+              <div style="display: grid; grid-template-columns: 150px 1fr; gap: 0.5rem;">
+                <strong>Log ID:</strong> <span>${log.id}</span>
+                <strong>Timestamp:</strong> <span>${new Date(log.createdAt).toLocaleString()}</span>
+                <strong>User:</strong> <span>${log.user ? log.user.fullName + ' (' + log.user.email + ')' : 'System'}</span>
+                <strong>Action:</strong> <span class="badge ${getActionBadgeClass(log.action)}">${log.action}</span>
+                <strong>Module:</strong> <span>${log.module}</span>
+                <strong>Status:</strong> <span class="badge ${getStatusBadgeClass(log.status)}">${log.status}</span>
+              </div>
+            </div>
+
+            ${log.recordId || log.recordName ? `
+            <div>
+              <h4 style="margin-bottom: 0.5rem; color: var(--primary-green);">Record Information</h4>
+              <div style="display: grid; grid-template-columns: 150px 1fr; gap: 0.5rem;">
+                ${log.recordId ? `<strong>Record ID:</strong> <span>${log.recordId}</span>` : ''}
+                ${log.recordName ? `<strong>Record Name:</strong> <span>${log.recordName}</span>` : ''}
+              </div>
+            </div>
+            ` : ''}
+
+            ${changes ? `
+            <div>
+              <h4 style="margin-bottom: 0.5rem; color: var(--primary-green);">Changes</h4>
+              <pre style="background: var(--bg-dark); padding: 1rem; border-radius: 4px; overflow-x: auto;">${JSON.stringify(changes, null, 2)}</pre>
+            </div>
+            ` : ''}
+
+            <div>
+              <h4 style="margin-bottom: 0.5rem; color: var(--primary-green);">Technical Details</h4>
+              <div style="display: grid; grid-template-columns: 150px 1fr; gap: 0.5rem;">
+                <strong>IP Address:</strong> <span>${log.ipAddress || 'N/A'}</span>
+                <strong>User Agent:</strong> <span style="font-size: 0.85em; word-break: break-all;">${log.userAgent || 'N/A'}</span>
+              </div>
+            </div>
+
+            ${log.errorMessage ? `
+            <div>
+              <h4 style="margin-bottom: 0.5rem; color: var(--danger);">Error Details</h4>
+              <pre style="background: var(--bg-dark); padding: 1rem; border-radius: 4px; overflow-x: auto; color: var(--danger);">${log.errorMessage}</pre>
+            </div>
+            ` : ''}
+          </div>
+        `;
+
+        document.getElementById('detailsModal').style.display = 'flex';
+      }
+    } catch (error) {
+      console.error('Error loading log details:', error);
+      alert('Failed to load log details');
+    }
+  }
+
+  function closeDetailsModal() {
+    document.getElementById('detailsModal').style.display = 'none';
+  }
+
+  function updatePagination(resultCount) {
+    const pagination = document.getElementById('pagination');
+
+    if (resultCount < pageSize && currentPage === 0) {
+      pagination.innerHTML = '';
+      return;
+    }
+
+    let html = '';
+    if (currentPage > 0) {
+      html += `<button class="btn btn-secondary" onclick="previousPage()"><i class="fas fa-chevron-left"></i> Previous</button>`;
+    }
+    html += `<span style="padding: 0 1rem;">Page ${currentPage + 1}</span>`;
+    if (resultCount === pageSize) {
+      html += `<button class="btn btn-secondary" onclick="nextPage()">Next <i class="fas fa-chevron-right"></i></button>`;
+    }
+
+    pagination.innerHTML = html;
+  }
+
+  function previousPage() {
+    if (currentPage > 0) {
+      currentPage--;
+      loadAuditLogs();
+    }
+  }
+
+  function nextPage() {
+    currentPage++;
+    loadAuditLogs();
+  }
+
+  function resetFilters() {
+    document.getElementById('filterAction').value = '';
+    document.getElementById('filterModule').value = '';
+    document.getElementById('filterStatus').value = '';
+    document.getElementById('filterStartDate').value = '';
+    document.getElementById('filterEndDate').value = '';
+    currentPage = 0;
+    loadAuditLogs();
+  }
+
+  function exportLogs() {
+    const action = document.getElementById('filterAction').value;
+    const module = document.getElementById('filterModule').value;
+    const status = document.getElementById('filterStatus').value;
+    const startDate = document.getElementById('filterStartDate').value;
+    const endDate = document.getElementById('filterEndDate').value;
+
+    const params = new URLSearchParams();
+    if (action) params.append('action', action);
+    if (module) params.append('module', module);
+    if (status) params.append('status', status);
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    params.append('limit', 10000); // Export up to 10,000 records
+
+    fetch('/api/audit-logs?' + params.toString())
+      .then(response => response.json())
+      .then(result => {
+        if (result.success) {
+          // Convert to CSV
+          const headers = ['ID', 'Timestamp', 'User', 'Action', 'Module', 'Record ID', 'Record Name', 'Status', 'IP Address', 'Error'];
+          const rows = result.data.map(log => [
+            log.id,
+            new Date(log.createdAt).toISOString(),
+            log.user ? log.user.fullName : 'System',
+            log.action,
+            log.module,
+            log.recordId || '',
+            log.recordName || '',
+            log.status,
+            log.ipAddress || '',
+            log.errorMessage || ''
+          ]);
+
+          const csv = [headers, ...rows].map(row =>
+            row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
+          ).join('\n');
+
+          // Download
+          const blob = new Blob([csv], { type: 'text/csv' });
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `audit-logs-${new Date().toISOString().split('T')[0]}.csv`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+        }
+      })
+      .catch(error => {
+        console.error('Error exporting logs:', error);
+        alert('Failed to export logs');
+      });
+  }
+
+  // Close modal when clicking outside
+  window.onclick = function(event) {
+    const modal = document.getElementById('detailsModal');
+    if (event.target === modal) {
+      closeDetailsModal();
+    }
+  };
+
+  // Load data on page load
+  loadAuditLogs();
+</script>
+
+<% } %>

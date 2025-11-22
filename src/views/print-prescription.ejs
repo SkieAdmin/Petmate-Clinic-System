@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prescription - <%= patient.name %></title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      padding: 20px;
+      line-height: 1.6;
+      color: #333;
+    }
+
+    .print-container {
+      max-width: 800px;
+      margin: 0 auto;
+      border: 2px solid #1976d2;
+      padding: 30px;
+    }
+
+    .header {
+      text-align: center;
+      border-bottom: 3px solid #1976d2;
+      padding-bottom: 15px;
+      margin-bottom: 25px;
+    }
+
+    .clinic-name {
+      font-size: 28px;
+      font-weight: bold;
+      color: #1976d2;
+      margin-bottom: 5px;
+    }
+
+    .clinic-subtitle {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 5px;
+    }
+
+    .doc-type {
+      font-size: 24px;
+      font-weight: bold;
+      color: #0d47a1;
+      margin-top: 10px;
+      padding: 10px;
+      background: #e3f2fd;
+      border-radius: 4px;
+      display: inline-block;
+    }
+
+    .rx-symbol {
+      font-size: 36px;
+      font-weight: bold;
+      color: #1976d2;
+      margin-right: 10px;
+    }
+
+    .section {
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: bold;
+      color: #1976d2;
+      border-bottom: 2px solid #90caf9;
+      padding-bottom: 5px;
+      margin-bottom: 10px;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 8px;
+      margin-bottom: 15px;
+    }
+
+    .info-label {
+      font-weight: bold;
+      color: #555;
+    }
+
+    .info-value {
+      color: #333;
+    }
+
+    .prescription-box {
+      background: #fff;
+      border: 2px solid #1976d2;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+      min-height: 150px;
+    }
+
+    .medications {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 4px;
+      border-left: 4px solid #1976d2;
+      white-space: pre-wrap;
+      font-size: 15px;
+      line-height: 1.8;
+      margin-bottom: 15px;
+    }
+
+    .instructions-box {
+      background: #fff3e0;
+      border: 1px solid #ff9800;
+      border-left: 4px solid #ff9800;
+      padding: 15px;
+      border-radius: 4px;
+      white-space: pre-wrap;
+      margin-top: 15px;
+    }
+
+    .instructions-label {
+      font-weight: bold;
+      color: #e65100;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .footer {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 2px solid #dee2e6;
+    }
+
+    .signature-section {
+      margin-top: 60px;
+      text-align: right;
+    }
+
+    .signature-box {
+      display: inline-block;
+      text-align: center;
+      min-width: 250px;
+    }
+
+    .signature-line {
+      border-top: 2px solid #333;
+      margin-bottom: 5px;
+      padding-top: 5px;
+    }
+
+    .doctor-name {
+      font-size: 16px;
+      font-weight: bold;
+      color: #1976d2;
+    }
+
+    .license-number {
+      font-size: 12px;
+      color: #666;
+      margin-top: 3px;
+    }
+
+    .print-info {
+      text-align: center;
+      font-size: 12px;
+      color: #999;
+      margin-top: 30px;
+      padding-top: 15px;
+      border-top: 1px solid #dee2e6;
+    }
+
+    @media print {
+      body {
+        padding: 0;
+      }
+
+      .print-container {
+        border: none;
+        padding: 0;
+      }
+
+      .no-print {
+        display: none;
+      }
+    }
+
+    .print-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #1976d2;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    .print-btn:hover {
+      background: #0d47a1;
+    }
+
+    .warning-box {
+      background: #ffebee;
+      border: 1px solid #f44336;
+      border-left: 4px solid #f44336;
+      padding: 10px;
+      border-radius: 4px;
+      margin-top: 20px;
+      font-size: 12px;
+    }
+
+    .date-issued {
+      background: #e3f2fd;
+      padding: 8px 12px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <button class="print-btn no-print" onclick="window.print()">
+    <i class="fas fa-print"></i> Print Prescription
+  </button>
+
+  <div class="print-container">
+    <!-- Header -->
+    <div class="header">
+      <div class="clinic-name">PETMATE VETERINARY CLINIC</div>
+      <div class="clinic-subtitle">Licensed Veterinary Practice</div>
+      <div class="clinic-subtitle">Professional Pet Healthcare Services</div>
+      <div style="margin-top: 15px;">
+        <span class="rx-symbol">℞</span>
+        <span class="doc-type">PRESCRIPTION (Rx)</span>
+      </div>
+    </div>
+
+    <!-- Date Issued -->
+    <div style="text-align: right; margin-bottom: 20px;">
+      <div class="date-issued">
+        <strong>Date Issued:</strong> <%= new Date(prescription.issuedDate).toLocaleDateString() %>
+      </div>
+    </div>
+
+    <!-- Patient Information -->
+    <div class="section">
+      <div class="section-title">Patient Information</div>
+      <div class="info-grid">
+        <div class="info-label">Patient Name:</div>
+        <div class="info-value"><strong><%= patient.name %></strong></div>
+
+        <div class="info-label">Species/Breed:</div>
+        <div class="info-value"><%= patient.species %><%= patient.breed ? ' - ' + patient.breed : '' %></div>
+
+        <div class="info-label">Weight:</div>
+        <div class="info-value"><%= patient.weight ? patient.weight + ' kg' : 'Not recorded' %></div>
+
+        <div class="info-label">Owner:</div>
+        <div class="info-value"><%= client.name %></div>
+
+        <div class="info-label">Contact:</div>
+        <div class="info-value"><%= client.phone || client.email || 'Not provided' %></div>
+      </div>
+    </div>
+
+    <!-- Prescription Details -->
+    <div class="prescription-box">
+      <div class="section-title">℞ MEDICATIONS PRESCRIBED</div>
+      <div class="medications"><%= prescription.medications %></div>
+
+      <% if (prescription.instructions) { %>
+      <div class="instructions-box">
+        <div class="instructions-label">INSTRUCTIONS / SIG:</div>
+        <div><%= prescription.instructions %></div>
+      </div>
+      <% } %>
+    </div>
+
+    <!-- Diagnosis Reference -->
+    <div class="section">
+      <div class="section-title">Diagnosis</div>
+      <div class="info-grid">
+        <div class="info-label">Condition:</div>
+        <div class="info-value"><%= diagnosis.diagnosisDetails %></div>
+
+        <% if (diagnosis.remarks) { %>
+        <div class="info-label">Remarks:</div>
+        <div class="info-value"><%= diagnosis.remarks %></div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Warning Box -->
+    <div class="warning-box">
+      <strong>⚠ IMPORTANT:</strong> This prescription is valid for veterinary use only. Follow dosage instructions carefully.
+      Contact the clinic immediately if adverse reactions occur. Do not share medications between animals.
+    </div>
+
+    <!-- Footer with Signature -->
+    <div class="footer">
+      <div class="signature-section">
+        <div class="signature-box">
+          <div class="signature-line">
+            <div class="doctor-name"><%= prescription.doctorName %></div>
+          </div>
+          <div style="font-size: 13px; color: #666; margin-top: 5px;">Licensed Veterinarian</div>
+          <div class="license-number">PRC License No: _______________</div>
+          <div class="license-number">PTR No: _______________</div>
+        </div>
+      </div>
+
+      <div class="print-info">
+        This is an official prescription from Petmate Veterinary Clinic<br>
+        For clinic use and owner's reference only<br>
+        Printed on: <%= new Date().toLocaleString() %>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Auto-print on load (optional)
+    // window.onload = function() { window.print(); }
+  </script>
+</body>
+</html>

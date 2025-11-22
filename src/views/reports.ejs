@@ -146,7 +146,7 @@
               <td>${client.name}</td>
               <td>${client.patientCount}</td>
               <td>${client.invoiceCount}</td>
-              <td style="color: var(--primary-green); font-weight: 600;">$${client.totalRevenue.toFixed(2)}</td>
+              <td style="color: var(--primary-green); font-weight: 600;">₱${client.totalRevenue.toFixed(2)}</td>
             </tr>
           `).join('');
         }
@@ -183,7 +183,7 @@
             <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
               <div>
                 <div class="stat-label">Total Revenue</div>
-                <div class="stat-value" style="font-size: 2rem; color: var(--success);">$${report.totalRevenue.toFixed(2)}</div>
+                <div class="stat-value" style="font-size: 2rem; color: var(--success);">₱${report.totalRevenue.toFixed(2)}</div>
               </div>
               <div>
                 <div class="stat-label">Number of Invoices</div>
@@ -191,7 +191,7 @@
               </div>
               <div>
                 <div class="stat-label">Average Invoice</div>
-                <div class="stat-value" style="font-size: 2rem;">$${(report.totalRevenue / (report.invoiceCount || 1)).toFixed(2)}</div>
+                <div class="stat-value" style="font-size: 2rem;">₱${(report.totalRevenue / (report.invoiceCount || 1)).toFixed(2)}</div>
               </div>
             </div>
           </div>

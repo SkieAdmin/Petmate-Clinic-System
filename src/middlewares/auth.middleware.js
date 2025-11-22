@@ -94,7 +94,7 @@ const redirectIfAuthenticated = (req, res, next) => {
 
     if (token) {
       authService.verifyToken(token);
-      return res.redirect('/');
+      return res.redirect('/dashboard');
     }
 
     next();
