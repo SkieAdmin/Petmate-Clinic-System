@@ -28,3 +28,5 @@ prisma/.env
 package-lock.json
 nul
 *.json
+/.claude
+package-lock.json
