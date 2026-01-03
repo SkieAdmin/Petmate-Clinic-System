@@ -43,6 +43,7 @@ model Patient {
   breed        String?
   birthDate    DateTime?
   weight       Float?        // Weight in kg
+  photoUrl     String?       // Pet profile picture URL
   qrCode       String?       @unique
   notes        String?       @db.Text
   createdAt    DateTime      @default(now())

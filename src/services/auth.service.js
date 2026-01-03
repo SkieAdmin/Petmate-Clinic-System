@@ -133,13 +133,21 @@ class AuthService {
     return userWithoutPassword;
   }
 
-  // Get all roles
+  // Get all roles (excluding Customer role for staff registration)
   async getRoles() {
     return await prisma.role.findMany({
+      where: {
+        name: {
+          not: 'Customer',
+        },
+      },
       select: {
         id: true,
         name: true,
         description: true,
+      },
+      orderBy: {
+        id: 'asc',
       },
     });
   }

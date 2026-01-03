@@ -14,7 +14,7 @@
   <div class="modal-content">
     <div class="modal-header">
       <h3><i class="fas fa-plus"></i> Add New Pet</h3>
-      <button class="close-btn" onclick="closeModal()">&times;</button>
+      <button class="close-btn" onclick="closeAddPetModal()">&times;</button>
     </div>
     <form id="addPetForm">
       <div class="form-row">
@@ -58,10 +58,23 @@
         <textarea id="petNotes" name="notes" rows="3" placeholder="Any special notes about your pet"></textarea>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button type="button" class="btn btn-secondary" onclick="closeAddPetModal()">Cancel</button>
         <button type="submit" class="btn btn-primary">Add Pet</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- Pet Details Modal -->
+<div id="petDetailsModal" class="modal" style="display: none;">
+  <div class="modal-content modal-large">
+    <div class="modal-header">
+      <h3><i class="fas fa-paw"></i> <span id="petDetailsTitle">Pet Details</span></h3>
+      <button class="close-btn" onclick="closePetDetailsModal()">&times;</button>
+    </div>
+    <div id="petDetailsContent">
+      <div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
+    </div>
   </div>
 </div>
 
@@ -77,6 +90,13 @@
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .pet-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
   }
 
   .pet-header {
@@ -97,6 +117,13 @@
     align-items: center;
     justify-content: center;
     font-size: 1.75rem;
+    overflow: hidden;
+  }
+
+  .pet-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 
   .pet-name {
@@ -136,12 +163,20 @@
     font-weight: 500;
   }
 
-  .pet-notes {
-    margin-top: 1rem;
-    padding-top: 1rem;
+  .pet-footer {
+    padding: 1rem 1.5rem;
+    background: #f8f9fa;
     border-top: 1px solid #e9ecef;
-    color: #495057;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     font-size: 0.875rem;
+    color: #6c757d;
+  }
+
+  .view-details {
+    color: #2d6a4f;
+    font-weight: 600;
   }
 
   .modal {
@@ -166,12 +201,20 @@
     overflow-y: auto;
   }
 
+  .modal-content.modal-large {
+    max-width: 800px;
+  }
+
   .modal-header {
     padding: 1.5rem;
     border-bottom: 1px solid #e9ecef;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 1;
   }
 
   .modal-header h3 {
@@ -215,9 +258,204 @@
     padding: 3rem;
     color: #6c757d;
   }
+
+  /* Pet Details Styles */
+  .pet-details-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 1.5rem;
+    padding: 1.5rem;
+  }
+
+  @media (max-width: 700px) {
+    .pet-details-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .pet-profile-section {
+    text-align: center;
+  }
+
+  .pet-profile-photo {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2d6a4f, #40916c);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 4rem;
+    color: white;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .pet-profile-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .photo-upload-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0,0,0,0.6);
+    color: white;
+    padding: 0.5rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .pet-profile-photo:hover .photo-upload-overlay {
+    opacity: 1;
+  }
+
+  .pet-profile-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1b4332;
+    margin-bottom: 0.25rem;
+  }
+
+  .pet-profile-species {
+    color: #6c757d;
+    margin-bottom: 1rem;
+  }
+
+  .pet-info-list {
+    text-align: left;
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+  }
+
+  .pet-info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e9ecef;
+  }
+
+  .pet-info-row:last-child {
+    border-bottom: none;
+  }
+
+  .pet-info-row .label {
+    color: #6c757d;
+    font-size: 0.875rem;
+  }
+
+  .pet-info-row .value {
+    color: #1b4332;
+    font-weight: 500;
+  }
+
+  .appointment-history-section {
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1b4332;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .appointment-item {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    border-left: 4px solid #2d6a4f;
+  }
+
+  .appointment-item.status-pending {
+    border-left-color: #ffc107;
+  }
+
+  .appointment-item.status-completed {
+    border-left-color: #28a745;
+  }
+
+  .appointment-item.status-canceled {
+    border-left-color: #dc3545;
+    opacity: 0.7;
+  }
+
+  .appointment-date {
+    font-weight: 600;
+    color: #1b4332;
+    margin-bottom: 0.25rem;
+  }
+
+  .appointment-reason {
+    color: #495057;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .appointment-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: #6c757d;
+  }
+
+  .status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .status-pending { background: #fff3cd; color: #856404; }
+  .status-approved { background: #cce5ff; color: #004085; }
+  .status-scheduled { background: #cce5ff; color: #004085; }
+  .status-arrived { background: #d4edda; color: #155724; }
+  .status-completed { background: #d4edda; color: #155724; }
+  .status-canceled { background: #f8d7da; color: #721c24; }
+
+  .no-appointments {
+    text-align: center;
+    padding: 2rem;
+    color: #6c757d;
+  }
+
+  .no-appointments i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.3;
+  }
+
+  .pet-notes-section {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #fff3cd;
+    border-radius: 8px;
+    font-size: 0.875rem;
+  }
+
+  .pet-notes-section i {
+    color: #856404;
+    margin-right: 0.5rem;
+  }
 </style>
 
 <script>
+  let currentPetId = null;
+
   function getSpeciesIcon(species) {
     const icons = {
       'Dog': 'fa-dog',
@@ -237,9 +475,28 @@
     const years = now.getFullYear() - birth.getFullYear();
     const months = now.getMonth() - birth.getMonth();
     if (years < 1) {
-      return months + (months === 1 ? ' month' : ' months');
+      const totalMonths = years * 12 + months;
+      return totalMonths + (totalMonths === 1 ? ' month' : ' months');
     }
     return years + (years === 1 ? ' year' : ' years');
+  }
+
+  function formatDate(dateStr) {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  function formatBirthDate(dateStr) {
+    if (!dateStr) return 'Unknown';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   }
 
   async function loadPets() {
@@ -263,10 +520,13 @@
           `;
         } else {
           container.innerHTML = `<div class="pets-grid">${result.data.map(pet => `
-            <div class="pet-card">
+            <div class="pet-card" onclick="showPetDetails(${pet.id})">
               <div class="pet-header">
                 <div class="pet-avatar">
-                  <i class="fas ${getSpeciesIcon(pet.species)}"></i>
+                  ${pet.photoUrl
+                    ? `<img src="${pet.photoUrl}" alt="${pet.name}">`
+                    : `<i class="fas ${getSpeciesIcon(pet.species)}"></i>`
+                  }
                 </div>
                 <div>
                   <div class="pet-name">${pet.name}</div>
@@ -284,7 +544,10 @@
                     <span class="pet-info-value">${pet.weight ? pet.weight + ' kg' : 'Not recorded'}</span>
                   </div>
                 </div>
-                ${pet.notes ? `<div class="pet-notes"><i class="fas fa-sticky-note"></i> ${pet.notes}</div>` : ''}
+              </div>
+              <div class="pet-footer">
+                <span><i class="fas fa-calendar-alt"></i> Click for details</span>
+                <span class="view-details">View <i class="fas fa-chevron-right"></i></span>
               </div>
             </div>
           `).join('')}</div>`;
@@ -295,13 +558,159 @@
     }
   }
 
+  async function showPetDetails(petId) {
+    currentPetId = petId;
+    document.getElementById('petDetailsModal').style.display = 'flex';
+    document.getElementById('petDetailsContent').innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+
+    try {
+      const response = await fetch(`/api/customer/pets/${petId}`);
+      const result = await response.json();
+
+      if (result.success) {
+        const pet = result.data;
+        document.getElementById('petDetailsTitle').textContent = pet.name;
+
+        const appointmentsHtml = pet.appointments && pet.appointments.length > 0
+          ? pet.appointments.map(apt => `
+              <div class="appointment-item status-${apt.status.toLowerCase()}">
+                <div class="appointment-date">${formatDate(apt.dateTime)}</div>
+                ${apt.reason ? `<div class="appointment-reason">${apt.reason}</div>` : ''}
+                <div class="appointment-meta">
+                  <span class="status-badge status-${apt.status.toLowerCase()}">${apt.status}</span>
+                  ${apt.doctor ? `<span><i class="fas fa-user-md"></i> Dr. ${apt.doctor.fullName}</span>` : ''}
+                </div>
+              </div>
+            `).join('')
+          : `<div class="no-appointments">
+               <i class="fas fa-calendar-times"></i>
+               <p>No appointments yet</p>
+             </div>`;
+
+        document.getElementById('petDetailsContent').innerHTML = `
+          <div class="pet-details-grid">
+            <div class="pet-profile-section">
+              <div class="pet-profile-photo" onclick="triggerPhotoUpload()">
+                ${pet.photoUrl
+                  ? `<img src="${pet.photoUrl}" alt="${pet.name}">`
+                  : `<i class="fas ${getSpeciesIcon(pet.species)}"></i>`
+                }
+                <div class="photo-upload-overlay">
+                  <i class="fas fa-camera"></i> Change Photo
+                </div>
+              </div>
+              <input type="file" id="photoInput" accept="image/*" style="display: none;" onchange="handlePhotoUpload(event)">
+              <div class="pet-profile-name">${pet.name}</div>
+              <div class="pet-profile-species">${pet.species}${pet.breed ? ' - ' + pet.breed : ''}</div>
+
+              <div class="pet-info-list">
+                <div class="pet-info-row">
+                  <span class="label">Age</span>
+                  <span class="value">${calculateAge(pet.birthDate)}</span>
+                </div>
+                <div class="pet-info-row">
+                  <span class="label">Birth Date</span>
+                  <span class="value">${formatBirthDate(pet.birthDate)}</span>
+                </div>
+                <div class="pet-info-row">
+                  <span class="label">Weight</span>
+                  <span class="value">${pet.weight ? pet.weight + ' kg' : 'Not recorded'}</span>
+                </div>
+                <div class="pet-info-row">
+                  <span class="label">Added</span>
+                  <span class="value">${new Date(pet.createdAt).toLocaleDateString()}</span>
+                </div>
+              </div>
+
+              ${pet.notes ? `
+                <div class="pet-notes-section">
+                  <i class="fas fa-sticky-note"></i> ${pet.notes}
+                </div>
+              ` : ''}
+            </div>
+
+            <div class="appointment-history-section">
+              <div class="section-title">
+                <i class="fas fa-history"></i> Appointment History
+              </div>
+              ${appointmentsHtml}
+            </div>
+          </div>
+        `;
+      } else {
+        document.getElementById('petDetailsContent').innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-exclamation-circle"></i>
+            <p>Error loading pet details</p>
+          </div>
+        `;
+      }
+    } catch (error) {
+      console.error('Error loading pet details:', error);
+      document.getElementById('petDetailsContent').innerHTML = `
+        <div class="empty-state">
+          <i class="fas fa-exclamation-circle"></i>
+          <p>Error loading pet details</p>
+        </div>
+      `;
+    }
+  }
+
+  function triggerPhotoUpload() {
+    document.getElementById('photoInput').click();
+  }
+
+  async function handlePhotoUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Photo must be less than 5MB');
+      return;
+    }
+
+    // Convert to base64 for simple storage
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+      const photoUrl = e.target.result;
+
+      try {
+        const response = await fetch(`/api/customer/pets/${currentPetId}/photo`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ photoUrl }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          // Reload pet details
+          showPetDetails(currentPetId);
+          // Reload pets grid
+          loadPets();
+        } else {
+          alert(result.message || 'Failed to update photo');
+        }
+      } catch (error) {
+        alert('Error uploading photo');
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
   function showAddPetModal() {
     document.getElementById('addPetModal').style.display = 'flex';
   }
 
-  function closeModal() {
+  function closeAddPetModal() {
     document.getElementById('addPetModal').style.display = 'none';
     document.getElementById('addPetForm').reset();
+  }
+
+  function closePetDetailsModal() {
+    document.getElementById('petDetailsModal').style.display = 'none';
+    currentPetId = null;
   }
 
   document.getElementById('addPetForm').addEventListener('submit', async (e) => {
@@ -326,7 +735,7 @@
       const result = await response.json();
 
       if (result.success) {
-        closeModal();
+        closeAddPetModal();
         loadPets();
         alert('Pet added successfully!');
       } else {
@@ -337,10 +746,16 @@
     }
   });
 
-  // Close modal when clicking outside
+  // Close modals when clicking outside
   document.getElementById('addPetModal').addEventListener('click', (e) => {
     if (e.target.id === 'addPetModal') {
-      closeModal();
+      closeAddPetModal();
+    }
+  });
+
+  document.getElementById('petDetailsModal').addEventListener('click', (e) => {
+    if (e.target.id === 'petDetailsModal') {
+      closePetDetailsModal();
     }
   });
 

@@ -23,6 +23,8 @@ router.get('/dashboard/summary', authenticateCustomer, customerController.getDas
 router.get('/pets', authenticateCustomer, customerController.getPets);
 router.post('/pets', authenticateCustomer, customerController.addPet);
 router.get('/pets/:id', authenticateCustomer, customerController.getPetById);
+router.put('/pets/:id', authenticateCustomer, customerController.updatePet);
+router.put('/pets/:id/photo', authenticateCustomer, customerController.updatePetPhoto);
 
 // Appointments
 router.get('/appointments', authenticateCustomer, customerController.getAppointments);

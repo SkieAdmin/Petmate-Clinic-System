@@ -239,7 +239,14 @@ class CustomerService {
       include: {
         appointments: {
           orderBy: { dateTime: 'desc' },
-          take: 5,
+          include: {
+            doctor: {
+              select: {
+                id: true,
+                fullName: true,
+              },
+            },
+          },
         },
       },
     });
@@ -249,6 +256,55 @@ class CustomerService {
     }
 
     return pet;
+  }
+
+  // Update pet photo
+  async updatePetPhoto(clientId, petId, photoUrl) {
+    // Verify pet belongs to customer
+    const pet = await prisma.patient.findFirst({
+      where: {
+        id: parseInt(petId),
+        clientId: parseInt(clientId),
+      },
+    });
+
+    if (!pet) {
+      throw new Error('Pet not found');
+    }
+
+    return await prisma.patient.update({
+      where: { id: parseInt(petId) },
+      data: { photoUrl },
+    });
+  }
+
+  // Update pet details
+  async updatePet(clientId, petId, petData) {
+    // Verify pet belongs to customer
+    const pet = await prisma.patient.findFirst({
+      where: {
+        id: parseInt(petId),
+        clientId: parseInt(clientId),
+      },
+    });
+
+    if (!pet) {
+      throw new Error('Pet not found');
+    }
+
+    const { name, species, breed, birthDate, weight, notes } = petData;
+
+    return await prisma.patient.update({
+      where: { id: parseInt(petId) },
+      data: {
+        name,
+        species,
+        breed: breed || null,
+        birthDate: birthDate ? new Date(birthDate) : null,
+        weight: weight ? parseFloat(weight) : null,
+        notes: notes || null,
+      },
+    });
   }
 
   // Add new pet

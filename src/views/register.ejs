@@ -3,225 +3,630 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= title %> - Petmate Clinic System</title>
-  <link rel="stylesheet" href="/css/auth.css">
+  <title>Staff Registration - Petmate Clinic</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #2d6a4f;
+      --primary-dark: #1b4332;
+      --primary-light: #40916c;
+      --accent: #52b788;
+      --bg-light: #f8faf9;
+      --white: #ffffff;
+      --text: #1a1a2e;
+      --text-light: #6b7280;
+      --border: #e5e7eb;
+      --error: #ef4444;
+      --success: #10b981;
+    }
+
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-light);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .register-container {
+      width: 100%;
+      max-width: 950px;
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    @media (max-width: 850px) {
+      .register-container {
+        grid-template-columns: 1fr;
+        max-width: 520px;
+      }
+      .info-panel {
+        display: none;
+      }
+    }
+
+    .register-card {
+      background: var(--white);
+      border-radius: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      padding: 2.5rem;
+    }
+
+    .register-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .register-logo {
+      width: 70px;
+      height: 70px;
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.25rem;
+      color: white;
+      font-size: 1.75rem;
+    }
+
+    .register-header h1 {
+      font-size: 1.5rem;
+      color: var(--text);
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .register-header p {
+      color: var(--text-light);
+      font-size: 0.9rem;
+    }
+
+    .staff-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+      color: white;
+      padding: 0.35rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-top: 0.75rem;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    @media (max-width: 500px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-wrapper i {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-light);
+      font-size: 1rem;
+    }
+
+    .input-wrapper input,
+    .input-wrapper select {
+      width: 100%;
+      padding: 0.875rem 1rem 0.875rem 2.75rem;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      font-size: 0.95rem;
+      color: var(--text);
+      transition: all 0.2s ease;
+      background: var(--white);
+    }
+
+    .input-wrapper select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+      background-position: right 0.75rem center;
+      background-repeat: no-repeat;
+      background-size: 1.5em 1.5em;
+      padding-right: 2.5rem;
+    }
+
+    .input-wrapper input:focus,
+    .input-wrapper select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.1);
+    }
+
+    .input-wrapper input::placeholder {
+      color: #9ca3af;
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--text-light);
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    .password-toggle:hover {
+      color: var(--primary);
+    }
+
+    .role-description {
+      font-size: 0.75rem;
+      color: var(--text-light);
+      margin-top: 0.25rem;
+      padding-left: 0.25rem;
+    }
+
+    .checkbox-wrapper {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .checkbox-wrapper input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      margin-top: 2px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    .checkbox-wrapper label {
+      font-size: 0.875rem;
+      color: var(--text-light);
+      cursor: pointer;
+    }
+
+    .btn-register {
+      width: 100%;
+      padding: 0.875rem;
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .btn-register:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(27, 67, 50, 0.3);
+    }
+
+    .btn-register:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      margin: 1.5rem 0;
+      color: var(--text-light);
+      font-size: 0.85rem;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .divider span {
+      padding: 0 1rem;
+    }
+
+    .login-link {
+      text-align: center;
+    }
+
+    .login-link p {
+      color: var(--text-light);
+      font-size: 0.9rem;
+    }
+
+    .login-link a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .login-link a:hover {
+      text-decoration: underline;
+    }
+
+    .message {
+      padding: 0.875rem 1rem;
+      border-radius: 10px;
+      margin-bottom: 1.25rem;
+      font-size: 0.875rem;
+      display: none;
+    }
+
+    .message.error {
+      background: #fef2f2;
+      color: var(--error);
+      border: 1px solid #fecaca;
+    }
+
+    .message.success {
+      background: #ecfdf5;
+      color: var(--success);
+      border: 1px solid #a7f3d0;
+    }
+
+    .customer-link {
+      text-align: center;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .customer-link a {
+      color: var(--text-light);
+      text-decoration: none;
+      font-size: 0.85rem;
+    }
+
+    .customer-link a:hover {
+      color: var(--primary);
+    }
+
+    /* Info Panel */
+    .info-panel {
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+      border-radius: 16px;
+      padding: 2rem;
+      color: white;
+    }
+
+    .info-panel h3 {
+      font-size: 1.25rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .info-panel > p {
+      font-size: 0.9rem;
+      opacity: 0.9;
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+
+    .roles-preview {
+      margin-bottom: 1.5rem;
+    }
+
+    .roles-preview h4 {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      margin-bottom: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .role-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .role-item i {
+      width: 32px;
+      height: 32px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+    }
+
+    .role-item .role-name {
+      font-weight: 600;
+    }
+
+    .role-item .role-desc {
+      font-size: 0.75rem;
+      opacity: 0.8;
+    }
+
+    .back-home {
+      text-align: center;
+      margin-top: 1.5rem;
+    }
+
+    .back-home a {
+      color: var(--text-light);
+      text-decoration: none;
+      font-size: 0.875rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: color 0.2s;
+    }
+
+    .back-home a:hover {
+      color: var(--primary);
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .spinner {
+      animation: spin 1s linear infinite;
+    }
+  </style>
 </head>
 <body>
-  <div class="auth-container">
-    <div class="auth-box">
-      <div class="auth-header">
-        <div class="logo">
-          <i class="fas fa-paw"></i>
+  <div class="register-container">
+    <div>
+      <div class="register-card">
+        <div class="register-header">
+          <div class="register-logo">
+            <i class="fas fa-user-md"></i>
+          </div>
+          <h1>Staff Registration</h1>
+          <p>Create your staff account to access the clinic system</p>
+          <div class="staff-badge">
+            <i class="fas fa-id-badge"></i> Staff Portal
+          </div>
         </div>
-        <h1>Petmate Clinic</h1>
-        <p>Create your account to get started</p>
+
+        <div id="message" class="message"></div>
+
+        <form id="registerForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="fullName">Full Name *</label>
+              <div class="input-wrapper">
+                <i class="fas fa-user"></i>
+                <input type="text" id="fullName" name="fullName" placeholder="Enter your full name" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="username">Username *</label>
+              <div class="input-wrapper">
+                <i class="fas fa-at"></i>
+                <input type="text" id="username" name="username" placeholder="Choose a username" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="email">Email Address *</label>
+              <div class="input-wrapper">
+                <i class="fas fa-envelope"></i>
+                <input type="email" id="email" name="email" placeholder="Enter your email" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="phone">Phone Number</label>
+              <div class="input-wrapper">
+                <i class="fas fa-phone"></i>
+                <input type="tel" id="phone" name="phone" placeholder="Your phone number">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="roleId">Staff Role *</label>
+            <div class="input-wrapper">
+              <i class="fas fa-briefcase"></i>
+              <select id="roleId" name="roleId" required>
+                <option value="">Loading roles...</option>
+              </select>
+            </div>
+            <div id="roleDescription" class="role-description"></div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="password">Password *</label>
+              <div class="input-wrapper">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="password" name="password" placeholder="Min 6 characters" required minlength="6">
+                <button type="button" class="password-toggle" onclick="togglePassword('password', 'toggleIcon1')">
+                  <i class="fas fa-eye" id="toggleIcon1"></i>
+                </button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="confirmPassword">Confirm Password *</label>
+              <div class="input-wrapper">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm password" required>
+                <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword', 'toggleIcon2')">
+                  <i class="fas fa-eye" id="toggleIcon2"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="checkbox-wrapper">
+            <input type="checkbox" id="terms" required>
+            <label for="terms">I agree to the Terms of Service and understand that this is for authorized staff only</label>
+          </div>
+
+          <button type="submit" class="btn-register" id="submitBtn">
+            <span id="btnText">Create Staff Account</span>
+          </button>
+        </form>
+
+        <div class="divider"><span>Already have an account?</span></div>
+
+        <div class="login-link">
+          <p><a href="/login">Sign in to your account</a></p>
+        </div>
+
+        <div class="customer-link">
+          <a href="/customer/register"><i class="fas fa-paw"></i> Pet Owner? Create Customer Account</a>
+        </div>
       </div>
 
-      <form id="registerForm" class="auth-form">
-        <div class="form-row">
-          <div class="form-group">
-            <label for="fullName">
-              <i class="fas fa-user"></i>
-              Full Name
-            </label>
-            <input
-              type="text"
-              id="fullName"
-              name="fullName"
-              placeholder="Enter your full name"
-              required
-            >
-          </div>
-
-          <div class="form-group">
-            <label for="username">
-              <i class="fas fa-user-circle"></i>
-              Username
-            </label>
-            <input
-              type="text"
-              id="username"
-              name="username"
-              placeholder="Choose a username"
-              required
-            >
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="email">
-            <i class="fas fa-envelope"></i>
-            Email Address
-          </label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            placeholder="Enter your email"
-            required
-          >
-        </div>
-
-        <div class="form-group">
-          <label for="phone">
-            <i class="fas fa-phone"></i>
-            Phone Number
-          </label>
-          <input
-            type="tel"
-            id="phone"
-            name="phone"
-            placeholder="Enter your phone number"
-          >
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="password">
-              <i class="fas fa-lock"></i>
-              Password
-            </label>
-            <div class="password-input">
-              <input
-                type="password"
-                id="password"
-                name="password"
-                placeholder="Create a password"
-                required
-              >
-              <button type="button" class="toggle-password" onclick="togglePassword('password')">
-                <i class="fas fa-eye"></i>
-              </button>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="confirmPassword">
-              <i class="fas fa-lock"></i>
-              Confirm Password
-            </label>
-            <div class="password-input">
-              <input
-                type="password"
-                id="confirmPassword"
-                name="confirmPassword"
-                placeholder="Confirm your password"
-                required
-              >
-              <button type="button" class="toggle-password" onclick="togglePassword('confirmPassword')">
-                <i class="fas fa-eye"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="roleId">
-            <i class="fas fa-briefcase"></i>
-            Role
-          </label>
-          <select id="roleId" name="roleId">
-            <option value="">Select your role</option>
-          </select>
-        </div>
-
-        <div class="form-options">
-          <label class="checkbox-label">
-            <input type="checkbox" name="terms" required>
-            <span>I agree to the Terms and Conditions</span>
-          </label>
-        </div>
-
-        <button type="submit" class="btn-primary" id="registerBtn">
-          <i class="fas fa-user-plus"></i>
-          Create Account
-        </button>
-
-        <div class="auth-footer">
-          <p>Already have an account? <a href="/login">Login here</a></p>
-        </div>
-      </form>
-
-      <div id="message" class="message"></div>
+      <div class="back-home">
+        <a href="/"><i class="fas fa-arrow-left"></i> Back to Home</a>
+      </div>
     </div>
 
-    <div class="auth-info">
-      <div class="info-content">
-        <h2>Join Petmate Clinic</h2>
-        <p>Professional pet care management system for modern veterinary clinics</p>
-        <div class="features">
-          <div class="feature">
-            <i class="fas fa-check-circle"></i>
-            <span>Comprehensive patient management</span>
+    <div class="info-panel">
+      <h3>Join Our Team</h3>
+      <p>Register as a staff member to access the Petmate Clinic management system.</p>
+
+      <div class="roles-preview">
+        <h4>Available Roles</h4>
+        <div class="role-item">
+          <i class="fas fa-user-shield"></i>
+          <div>
+            <div class="role-name">Admin</div>
+            <div class="role-desc">Full system access</div>
           </div>
-          <div class="feature">
-            <i class="fas fa-check-circle"></i>
-            <span>Appointment scheduling</span>
+        </div>
+        <div class="role-item">
+          <i class="fas fa-user-md"></i>
+          <div>
+            <div class="role-name">Doctor</div>
+            <div class="role-desc">Clinical operations</div>
           </div>
-          <div class="feature">
-            <i class="fas fa-check-circle"></i>
-            <span>Inventory tracking</span>
-          </div>
-          <div class="feature">
-            <i class="fas fa-check-circle"></i>
-            <span>Billing and invoicing</span>
+        </div>
+        <div class="role-item">
+          <i class="fas fa-headset"></i>
+          <div>
+            <div class="role-name">Frontdesk</div>
+            <div class="role-desc">Appointments & clients</div>
           </div>
         </div>
       </div>
+
+      <p style="font-size: 0.8rem; opacity: 0.7;">
+        <i class="fas fa-info-circle"></i> Contact your administrator if you need a specific role assigned.
+      </p>
     </div>
   </div>
 
   <script>
-    // Load roles
+    const roleDescriptions = {
+      'Admin': 'Full access to all system features including reports, invoices, and user management.',
+      'Doctor': 'Access to patient records, appointments, diagnoses, and treatments.',
+      'Frontdesk': 'Manage appointments, clients, and basic patient information.',
+    };
+
     async function loadRoles() {
+      const roleSelect = document.getElementById('roleId');
+      const roleDescription = document.getElementById('roleDescription');
+
       try {
         const response = await fetch('/api/auth/roles');
         const data = await response.json();
 
-        if (data.success) {
-          const roleSelect = document.getElementById('roleId');
+        roleSelect.innerHTML = '<option value="">Select your role</option>';
+
+        if (data.success && data.data.length > 0) {
           data.data.forEach(role => {
             const option = document.createElement('option');
             option.value = role.id;
             option.textContent = role.name;
             if (role.name === 'Frontdesk') {
               option.selected = true;
+              roleDescription.textContent = roleDescriptions[role.name] || role.description || '';
             }
             roleSelect.appendChild(option);
           });
+        } else {
+          roleSelect.innerHTML = '<option value="">No roles available - contact admin</option>';
         }
       } catch (error) {
         console.error('Error loading roles:', error);
+        roleSelect.innerHTML = '<option value="">Error loading roles</option>';
       }
+
+      // Update description when role changes
+      roleSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const roleName = selectedOption.textContent;
+        roleDescription.textContent = roleDescriptions[roleName] || '';
+      });
     }
 
     loadRoles();
 
-    function togglePassword(inputId) {
-      const passwordInput = document.getElementById(inputId);
-      const toggleBtn = passwordInput.parentElement.querySelector('.toggle-password i');
-
-      if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        toggleBtn.classList.remove('fa-eye');
-        toggleBtn.classList.add('fa-eye-slash');
+    function togglePassword(inputId, iconId) {
+      const input = document.getElementById(inputId);
+      const icon = document.getElementById(iconId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
       } else {
-        passwordInput.type = 'password';
-        toggleBtn.classList.remove('fa-eye-slash');
-        toggleBtn.classList.add('fa-eye');
+        input.type = 'password';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
       }
     }
 
-    function showMessage(text, type = 'error') {
-      const messageDiv = document.getElementById('message');
-      messageDiv.textContent = text;
-      messageDiv.className = `message ${type}`;
-      messageDiv.style.display = 'block';
-
-      setTimeout(() => {
-        messageDiv.style.display = 'none';
-      }, 5000);
+    function showMessage(text, type) {
+      const msg = document.getElementById('message');
+      msg.textContent = text;
+      msg.className = 'message ' + type;
+      msg.style.display = 'block';
+      if (type === 'error') {
+        setTimeout(() => msg.style.display = 'none', 5000);
+      }
     }
 
     document.getElementById('registerForm').addEventListener('submit', async (e) => {
@@ -229,55 +634,57 @@
 
       const password = document.getElementById('password').value;
       const confirmPassword = document.getElementById('confirmPassword').value;
+      const roleId = document.getElementById('roleId').value;
 
       if (password !== confirmPassword) {
-        showMessage('Passwords do not match!');
+        showMessage('Passwords do not match', 'error');
         return;
       }
 
       if (password.length < 6) {
-        showMessage('Password must be at least 6 characters long!');
+        showMessage('Password must be at least 6 characters', 'error');
         return;
       }
 
-      const registerBtn = document.getElementById('registerBtn');
-      registerBtn.disabled = true;
-      registerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Account...';
+      if (!roleId) {
+        showMessage('Please select a role', 'error');
+        return;
+      }
 
-      const formData = {
-        fullName: document.getElementById('fullName').value,
-        username: document.getElementById('username').value,
-        email: document.getElementById('email').value,
-        phone: document.getElementById('phone').value,
-        password: password,
-        roleId: document.getElementById('roleId').value || undefined,
-      };
+      const btn = document.getElementById('submitBtn');
+      const btnText = document.getElementById('btnText');
+
+      btn.disabled = true;
+      btnText.innerHTML = '<i class="fas fa-circle-notch spinner"></i> Creating account...';
 
       try {
         const response = await fetch('/api/auth/register', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(formData),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fullName: document.getElementById('fullName').value,
+            username: document.getElementById('username').value,
+            email: document.getElementById('email').value,
+            phone: document.getElementById('phone').value || null,
+            password: password,
+            roleId: roleId,
+          })
         });
 
         const data = await response.json();
 
         if (data.success) {
-          showMessage('Registration successful! Redirecting...', 'success');
-          setTimeout(() => {
-            window.location.href = '/';
-          }, 1000);
+          showMessage('Account created! Redirecting to dashboard...', 'success');
+          setTimeout(() => window.location.href = '/dashboard', 1000);
         } else {
-          showMessage(data.message || 'Registration failed. Please try again.');
-          registerBtn.disabled = false;
-          registerBtn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
+          showMessage(data.message || 'Registration failed', 'error');
+          btn.disabled = false;
+          btnText.textContent = 'Create Staff Account';
         }
       } catch (error) {
-        showMessage('An error occurred. Please try again.');
-        registerBtn.disabled = false;
-        registerBtn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
+        showMessage('Connection error. Please try again.', 'error');
+        btn.disabled = false;
+        btnText.textContent = 'Create Staff Account';
       }
     });
   </script>

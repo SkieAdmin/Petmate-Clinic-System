@@ -3,105 +3,499 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Customer Registration - Petmate Clinic</title>
-  <link rel="stylesheet" href="/css/auth.css">
+  <title>Create Account - Petmate Clinic</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #2d6a4f;
+      --primary-dark: #1b4332;
+      --primary-light: #40916c;
+      --accent: #52b788;
+      --bg-light: #f8faf9;
+      --white: #ffffff;
+      --text: #1a1a2e;
+      --text-light: #6b7280;
+      --border: #e5e7eb;
+      --error: #ef4444;
+      --success: #10b981;
+    }
+
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-light);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .register-container {
+      width: 100%;
+      max-width: 900px;
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    @media (max-width: 800px) {
+      .register-container {
+        grid-template-columns: 1fr;
+        max-width: 480px;
+      }
+      .info-panel {
+        display: none;
+      }
+    }
+
+    .register-card {
+      background: var(--white);
+      border-radius: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      padding: 2.5rem;
+    }
+
+    .register-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .register-logo {
+      width: 70px;
+      height: 70px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.25rem;
+      color: white;
+      font-size: 1.75rem;
+    }
+
+    .register-header h1 {
+      font-size: 1.5rem;
+      color: var(--text);
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .register-header p {
+      color: var(--text-light);
+      font-size: 0.9rem;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    @media (max-width: 500px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-wrapper i {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-light);
+      font-size: 1rem;
+    }
+
+    .input-wrapper input,
+    .input-wrapper textarea {
+      width: 100%;
+      padding: 0.875rem 1rem 0.875rem 2.75rem;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      font-size: 0.95rem;
+      color: var(--text);
+      transition: all 0.2s ease;
+      background: var(--white);
+    }
+
+    .input-wrapper input:focus,
+    .input-wrapper textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.1);
+    }
+
+    .input-wrapper input::placeholder,
+    .input-wrapper textarea::placeholder {
+      color: #9ca3af;
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--text-light);
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    .password-toggle:hover {
+      color: var(--primary);
+    }
+
+    .checkbox-wrapper {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .checkbox-wrapper input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      margin-top: 2px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    .checkbox-wrapper label {
+      font-size: 0.875rem;
+      color: var(--text-light);
+      cursor: pointer;
+    }
+
+    .checkbox-wrapper a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .checkbox-wrapper a:hover {
+      text-decoration: underline;
+    }
+
+    .btn-register {
+      width: 100%;
+      padding: 0.875rem;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .btn-register:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(45, 106, 79, 0.3);
+    }
+
+    .btn-register:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      margin: 1.5rem 0;
+      color: var(--text-light);
+      font-size: 0.85rem;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .divider span {
+      padding: 0 1rem;
+    }
+
+    .login-link {
+      text-align: center;
+    }
+
+    .login-link p {
+      color: var(--text-light);
+      font-size: 0.9rem;
+    }
+
+    .login-link a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .login-link a:hover {
+      text-decoration: underline;
+    }
+
+    .message {
+      padding: 0.875rem 1rem;
+      border-radius: 10px;
+      margin-bottom: 1.25rem;
+      font-size: 0.875rem;
+      display: none;
+    }
+
+    .message.error {
+      background: #fef2f2;
+      color: var(--error);
+      border: 1px solid #fecaca;
+    }
+
+    .message.success {
+      background: #ecfdf5;
+      color: var(--success);
+      border: 1px solid #a7f3d0;
+    }
+
+    .staff-link {
+      text-align: center;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .staff-link a {
+      color: var(--text-light);
+      text-decoration: none;
+      font-size: 0.85rem;
+    }
+
+    .staff-link a:hover {
+      color: var(--primary);
+    }
+
+    /* Info Panel */
+    .info-panel {
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      border-radius: 16px;
+      padding: 2rem;
+      color: white;
+    }
+
+    .info-panel h3 {
+      font-size: 1.25rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .info-panel > p {
+      font-size: 0.9rem;
+      opacity: 0.9;
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+
+    .features {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .feature {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.9rem;
+    }
+
+    .feature i {
+      width: 36px;
+      height: 36px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+    }
+
+    .back-home {
+      text-align: center;
+      margin-top: 1.5rem;
+    }
+
+    .back-home a {
+      color: var(--text-light);
+      text-decoration: none;
+      font-size: 0.875rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: color 0.2s;
+    }
+
+    .back-home a:hover {
+      color: var(--primary);
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .spinner {
+      animation: spin 1s linear infinite;
+    }
+  </style>
 </head>
 <body>
-  <div class="auth-container">
-    <div class="auth-box">
-      <div class="auth-header">
-        <div class="auth-icon">
-          <i class="fas fa-user-plus"></i>
+  <div class="register-container">
+    <div>
+      <div class="register-card">
+        <div class="register-header">
+          <div class="register-logo">
+            <i class="fas fa-paw"></i>
+          </div>
+          <h1>Create Your Account</h1>
+          <p>Join us to manage your pet's healthcare</p>
         </div>
-        <h2>Create Account</h2>
-        <p>Register to access the customer portal</p>
+
+        <div id="message" class="message"></div>
+
+        <form id="registerForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="name">Full Name *</label>
+              <div class="input-wrapper">
+                <i class="fas fa-user"></i>
+                <input type="text" id="name" name="name" placeholder="Enter your full name" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="phone">Phone Number</label>
+              <div class="input-wrapper">
+                <i class="fas fa-phone"></i>
+                <input type="tel" id="phone" name="phone" placeholder="Your phone number">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email Address *</label>
+            <div class="input-wrapper">
+              <i class="fas fa-envelope"></i>
+              <input type="email" id="email" name="email" placeholder="Enter your email" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="address">Address</label>
+            <div class="input-wrapper">
+              <i class="fas fa-map-marker-alt"></i>
+              <input type="text" id="address" name="address" placeholder="Your address (optional)">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="password">Password *</label>
+              <div class="input-wrapper">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="password" name="password" placeholder="Min 6 characters" required minlength="6">
+                <button type="button" class="password-toggle" onclick="togglePassword('password', 'toggleIcon1')">
+                  <i class="fas fa-eye" id="toggleIcon1"></i>
+                </button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="confirmPassword">Confirm Password *</label>
+              <div class="input-wrapper">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm password" required>
+                <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword', 'toggleIcon2')">
+                  <i class="fas fa-eye" id="toggleIcon2"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="checkbox-wrapper">
+            <input type="checkbox" id="terms" required>
+            <label for="terms">I agree to the <a href="#" onclick="event.preventDefault(); alert('Terms of Service coming soon')">Terms of Service</a> and <a href="#" onclick="event.preventDefault(); alert('Privacy Policy coming soon')">Privacy Policy</a></label>
+          </div>
+
+          <button type="submit" class="btn-register" id="submitBtn">
+            <span id="btnText">Create Account</span>
+          </button>
+        </form>
+
+        <div class="divider"><span>Already have an account?</span></div>
+
+        <div class="login-link">
+          <p><a href="/customer/login">Sign in to your account</a></p>
+        </div>
+
+        <div class="staff-link">
+          <a href="/login"><i class="fas fa-briefcase"></i> Staff Login</a>
+        </div>
       </div>
 
-      <div id="message" class="message" style="display: none;"></div>
-
-      <form id="registerForm" class="auth-form">
-        <div class="form-row">
-          <div class="form-group">
-            <label for="name"><i class="fas fa-user"></i> Full Name *</label>
-            <input type="text" id="name" name="name" required placeholder="Your full name">
-          </div>
-          <div class="form-group">
-            <label for="phone"><i class="fas fa-phone"></i> Phone</label>
-            <input type="tel" id="phone" name="phone" placeholder="Your phone number">
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="email"><i class="fas fa-envelope"></i> Email Address *</label>
-          <input type="email" id="email" name="email" required placeholder="Enter your email">
-        </div>
-
-        <div class="form-group">
-          <label for="address"><i class="fas fa-map-marker-alt"></i> Address</label>
-          <input type="text" id="address" name="address" placeholder="Your address">
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="password"><i class="fas fa-lock"></i> Password *</label>
-            <div class="password-input">
-              <input type="password" id="password" name="password" required placeholder="Min 6 characters" minlength="6">
-              <button type="button" class="password-toggle" onclick="togglePassword('password', 'toggleIcon1')">
-                <i class="fas fa-eye" id="toggleIcon1"></i>
-              </button>
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="confirmPassword"><i class="fas fa-lock"></i> Confirm Password *</label>
-            <div class="password-input">
-              <input type="password" id="confirmPassword" name="confirmPassword" required placeholder="Confirm password">
-              <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword', 'toggleIcon2')">
-                <i class="fas fa-eye" id="toggleIcon2"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="checkbox-label">
-            <input type="checkbox" id="terms" required>
-            I agree to the <a href="#" onclick="alert('Terms of Service coming soon')">Terms of Service</a>
-          </label>
-        </div>
-
-        <button type="submit" class="btn-submit" id="submitBtn">
-          <span id="btnText">Create Account</span>
-          <span id="btnLoader" class="loader" style="display: none;"></span>
-        </button>
-      </form>
-
-      <div class="auth-footer">
-        <p>Already have an account? <a href="/customer/login">Login here</a></p>
-        <p class="divider"><span>or</span></p>
-        <p><a href="/login">Staff Login <i class="fas fa-arrow-right"></i></a></p>
+      <div class="back-home">
+        <a href="/"><i class="fas fa-arrow-left"></i> Back to Home</a>
       </div>
     </div>
 
-    <div class="auth-info">
+    <div class="info-panel">
       <h3>Why Create an Account?</h3>
       <p>Join our customer portal to manage your pet's healthcare journey with ease.</p>
       <div class="features">
         <div class="feature">
-          <i class="fas fa-calendar-plus"></i>
-          <span>Book Appointments Online</span>
+          <i class="fas fa-calendar-check"></i>
+          <span>Book appointments online</span>
         </div>
         <div class="feature">
           <i class="fas fa-paw"></i>
-          <span>Manage Multiple Pets</span>
+          <span>Manage multiple pets</span>
         </div>
         <div class="feature">
           <i class="fas fa-history"></i>
-          <span>View Appointment History</span>
+          <span>View appointment history</span>
         </div>
         <div class="feature">
           <i class="fas fa-file-invoice-dollar"></i>
-          <span>Track Invoices & Payments</span>
+          <span>Track invoices & payments</span>
+        </div>
+        <div class="feature">
+          <i class="fas fa-bell"></i>
+          <span>Get appointment reminders</span>
         </div>
       </div>
     </div>
@@ -109,29 +503,25 @@
 
   <script>
     function togglePassword(inputId, iconId) {
-      const passwordInput = document.getElementById(inputId);
-      const toggleIcon = document.getElementById(iconId);
-
-      if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        toggleIcon.classList.remove('fa-eye');
-        toggleIcon.classList.add('fa-eye-slash');
+      const input = document.getElementById(inputId);
+      const icon = document.getElementById(iconId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
       } else {
-        passwordInput.type = 'password';
-        toggleIcon.classList.remove('fa-eye-slash');
-        toggleIcon.classList.add('fa-eye');
+        input.type = 'password';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
       }
     }
 
     function showMessage(text, type) {
-      const messageEl = document.getElementById('message');
-      messageEl.textContent = text;
-      messageEl.className = 'message ' + type;
-      messageEl.style.display = 'block';
-
-      setTimeout(() => {
-        messageEl.style.display = 'none';
-      }, 5000);
+      const msg = document.getElementById('message');
+      msg.textContent = text;
+      msg.className = 'message ' + type;
+      msg.style.display = 'block';
+      if (type === 'error') {
+        setTimeout(() => msg.style.display = 'none', 5000);
+      }
     }
 
     document.getElementById('registerForm').addEventListener('submit', async (e) => {
@@ -150,49 +540,39 @@
         return;
       }
 
-      const submitBtn = document.getElementById('submitBtn');
+      const btn = document.getElementById('submitBtn');
       const btnText = document.getElementById('btnText');
-      const btnLoader = document.getElementById('btnLoader');
 
-      submitBtn.disabled = true;
-      btnText.style.display = 'none';
-      btnLoader.style.display = 'inline-block';
-
-      const formData = {
-        name: document.getElementById('name').value,
-        email: document.getElementById('email').value,
-        password: password,
-        phone: document.getElementById('phone').value || null,
-        address: document.getElementById('address').value || null,
-      };
+      btn.disabled = true;
+      btnText.innerHTML = '<i class="fas fa-circle-notch spinner"></i> Creating account...';
 
       try {
         const response = await fetch('/api/customer/register', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(formData),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: document.getElementById('name').value,
+            email: document.getElementById('email').value,
+            password: password,
+            phone: document.getElementById('phone').value || null,
+            address: document.getElementById('address').value || null
+          })
         });
 
         const data = await response.json();
 
         if (data.success) {
-          showMessage(data.message || 'Registration successful! Redirecting...', 'success');
-          setTimeout(() => {
-            window.location.href = '/customer/dashboard';
-          }, 1500);
+          showMessage('Account created! Redirecting...', 'success');
+          setTimeout(() => window.location.href = '/customer/dashboard', 800);
         } else {
           showMessage(data.message || 'Registration failed', 'error');
-          submitBtn.disabled = false;
-          btnText.style.display = 'inline';
-          btnLoader.style.display = 'none';
+          btn.disabled = false;
+          btnText.textContent = 'Create Account';
         }
       } catch (error) {
-        showMessage('An error occurred. Please try again.', 'error');
-        submitBtn.disabled = false;
-        btnText.style.display = 'inline';
-        btnLoader.style.display = 'none';
+        showMessage('Connection error. Please try again.', 'error');
+        btn.disabled = false;
+        btnText.textContent = 'Create Account';
       }
     });
   </script>

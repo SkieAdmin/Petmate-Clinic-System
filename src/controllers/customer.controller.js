@@ -211,6 +211,54 @@ class CustomerController {
     });
   });
 
+  // Update pet
+  updatePet = asyncHandler(async (req, res) => {
+    const { name, species, breed, birthDate, weight, notes } = req.body;
+
+    if (!name || !species) {
+      return res.status(400).json({
+        success: false,
+        message: 'Pet name and species are required',
+      });
+    }
+
+    const pet = await customerService.updatePet(
+      req.customer.clientId,
+      req.params.id,
+      { name, species, breed, birthDate, weight, notes }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Pet updated successfully',
+      data: pet,
+    });
+  });
+
+  // Update pet photo
+  updatePetPhoto = asyncHandler(async (req, res) => {
+    const { photoUrl } = req.body;
+
+    if (!photoUrl) {
+      return res.status(400).json({
+        success: false,
+        message: 'Photo URL is required',
+      });
+    }
+
+    const pet = await customerService.updatePetPhoto(
+      req.customer.clientId,
+      req.params.id,
+      photoUrl
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Photo updated successfully',
+      data: pet,
+    });
+  });
+
   // ==================== APPOINTMENTS ====================
 
   // Get all appointments
