@@ -68,6 +68,18 @@ async function main() {
     },
   });
 
+  const customerRole = await prisma.role.create({
+    data: {
+      name: 'Customer',
+      description: 'Pet owner with access to customer portal',
+      permissions: JSON.stringify([
+        'customer.dashboard', 'customer.pets.view', 'customer.pets.create',
+        'customer.appointments.view', 'customer.appointments.create',
+        'customer.invoices.view', 'customer.profile.view', 'customer.profile.edit'
+      ]),
+    },
+  });
+
   console.log('Creating default users...');
 
   // Create admin user (password: admin123)
@@ -113,13 +125,19 @@ async function main() {
 
   console.log('Creating clients...');
 
-  // Create clients
+  // Hash password for customer accounts
+  const customerPassword = await bcrypt.hash('customer123', 10);
+
+  // Create clients (some with customer portal access)
   const client1 = await prisma.client.create({
     data: {
       name: 'John Doe',
       phone: '(555) 123-4567',
       email: 'john.doe@email.com',
       address: '123 Oak Street, Springfield, IL 62701',
+      password: customerPassword,  // Customer portal enabled
+      emailVerified: true,
+      isActive: true,
     },
   });
 
@@ -129,6 +147,9 @@ async function main() {
       phone: '(555) 234-5678',
       email: 'jane.smith@email.com',
       address: '456 Elm Avenue, Springfield, IL 62702',
+      password: customerPassword,  // Customer portal enabled
+      emailVerified: true,
+      isActive: true,
     },
   });
 
@@ -138,6 +159,7 @@ async function main() {
       phone: '(555) 345-6789',
       email: 'robert.j@email.com',
       address: '789 Maple Drive, Springfield, IL 62703',
+      // No password - legacy client without portal access
     },
   });
 
@@ -147,6 +169,7 @@ async function main() {
       phone: '(555) 456-7890',
       email: 'emily.brown@email.com',
       address: '321 Pine Road, Springfield, IL 62704',
+      // No password - legacy client without portal access
     },
   });
 
@@ -447,9 +470,10 @@ async function main() {
 
   console.log('Database seed completed successfully!');
   console.log('Summary:');
-  console.log('- 4 Roles created (Admin, Doctor, Frontdesk, Employee)');
-  console.log('- 1 User created (admin/admin123)');
-  console.log('- 4 Clients created');
+  console.log('- 5 Roles created (Admin, Doctor, Frontdesk, Employee, Customer)');
+  console.log('- 3 Staff users created (admin/admin123, doctor/admin123, frontdesk/admin123)');
+  console.log('- 4 Clients created (2 with customer portal access)');
+  console.log('- Customer portal test accounts: john.doe@email.com / customer123');
   console.log('- 6 Patients created');
   console.log('- 7 Inventory items created');
   console.log('- 4 Appointments created');

@@ -1,0 +1,291 @@
+<div class="page-header">
+  <h2><i class="fas fa-home"></i> Welcome, <%= customer.name %>!</h2>
+</div>
+
+<div class="dashboard-grid">
+  <!-- Stats Cards -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-icon" style="background: linear-gradient(135deg, #52b788, #2d6a4f);">
+        <i class="fas fa-paw"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-value" id="petsCount">-</div>
+        <div class="stat-label">My Pets</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon" style="background: linear-gradient(135deg, #4361ee, #3a0ca3);">
+        <i class="fas fa-calendar-check"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-value" id="appointmentsCount">-</div>
+        <div class="stat-label">Upcoming Appointments</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon" style="background: linear-gradient(135deg, #f72585, #b5179e);">
+        <i class="fas fa-file-invoice-dollar"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-value" id="unpaidCount">-</div>
+        <div class="stat-label">Unpaid Invoices</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon" style="background: linear-gradient(135deg, #ff6b35, #f7931e);">
+        <i class="fas fa-peso-sign"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-value" id="unpaidTotal">-</div>
+        <div class="stat-label">Outstanding Balance</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="card">
+    <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
+    <div class="quick-actions">
+      <a href="/customer/appointments" class="action-btn">
+        <i class="fas fa-calendar-plus"></i>
+        Book Appointment
+      </a>
+      <a href="/customer/pets" class="action-btn">
+        <i class="fas fa-plus"></i>
+        Add New Pet
+      </a>
+      <a href="/customer/invoices" class="action-btn">
+        <i class="fas fa-file-invoice"></i>
+        View Invoices
+      </a>
+    </div>
+  </div>
+
+  <!-- Upcoming Appointments -->
+  <div class="card">
+    <h3><i class="fas fa-calendar-alt"></i> Upcoming Appointments</h3>
+    <div id="upcomingAppointments">
+      <div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
+    </div>
+  </div>
+
+  <!-- Unpaid Invoices -->
+  <div class="card">
+    <h3><i class="fas fa-exclamation-circle"></i> Unpaid Invoices</h3>
+    <div id="unpaidInvoices">
+      <div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .dashboard-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+
+  .stat-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+  }
+
+  .stat-info {
+    flex: 1;
+  }
+
+  .stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1b4332;
+  }
+
+  .stat-label {
+    color: #6c757d;
+    font-size: 0.875rem;
+  }
+
+  .quick-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #2d6a4f, #1b4332);
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(45, 106, 79, 0.3);
+  }
+
+  .appointment-item, .invoice-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+  }
+
+  .appointment-info, .invoice-info {
+    flex: 1;
+  }
+
+  .appointment-pet, .invoice-number {
+    font-weight: 600;
+    color: #1b4332;
+  }
+
+  .appointment-date, .invoice-date {
+    color: #6c757d;
+    font-size: 0.875rem;
+  }
+
+  .appointment-reason {
+    color: #495057;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+  }
+
+  .badge {
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .badge-pending { background: #fff3cd; color: #856404; }
+  .badge-approved { background: #d4edda; color: #155724; }
+  .badge-unpaid { background: #f8d7da; color: #721c24; }
+
+  .invoice-amount {
+    font-weight: 700;
+    color: #dc3545;
+    font-size: 1.1rem;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: #6c757d;
+  }
+
+  .empty-state i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.5;
+  }
+
+  .loading {
+    text-align: center;
+    padding: 2rem;
+    color: #6c757d;
+  }
+</style>
+
+<script>
+  async function loadDashboard() {
+    try {
+      const response = await fetch('/api/customer/dashboard/summary');
+      const result = await response.json();
+
+      if (result.success) {
+        const data = result.data;
+
+        // Update stats
+        document.getElementById('petsCount').textContent = data.petsCount;
+        document.getElementById('appointmentsCount').textContent = data.upcomingAppointments.length;
+        document.getElementById('unpaidCount').textContent = data.unpaidInvoices.length;
+        document.getElementById('unpaidTotal').textContent = '₱' + data.unpaidTotal.toFixed(2);
+
+        // Render upcoming appointments
+        const appointmentsEl = document.getElementById('upcomingAppointments');
+        if (data.upcomingAppointments.length === 0) {
+          appointmentsEl.innerHTML = `
+            <div class="empty-state">
+              <i class="fas fa-calendar-check"></i>
+              <p>No upcoming appointments</p>
+              <a href="/customer/appointments" class="action-btn" style="display: inline-flex; margin-top: 0.5rem;">
+                <i class="fas fa-plus"></i> Book Now
+              </a>
+            </div>
+          `;
+        } else {
+          appointmentsEl.innerHTML = data.upcomingAppointments.map(apt => `
+            <div class="appointment-item">
+              <div class="appointment-info">
+                <div class="appointment-pet"><i class="fas fa-paw"></i> ${apt.patient.name}</div>
+                <div class="appointment-date"><i class="fas fa-clock"></i> ${new Date(apt.dateTime).toLocaleString()}</div>
+                <div class="appointment-reason">${apt.reason || 'General visit'}</div>
+              </div>
+              <span class="badge badge-${apt.status.toLowerCase()}">${apt.status}</span>
+            </div>
+          `).join('');
+        }
+
+        // Render unpaid invoices
+        const invoicesEl = document.getElementById('unpaidInvoices');
+        if (data.unpaidInvoices.length === 0) {
+          invoicesEl.innerHTML = `
+            <div class="empty-state">
+              <i class="fas fa-check-circle"></i>
+              <p>No outstanding invoices</p>
+            </div>
+          `;
+        } else {
+          invoicesEl.innerHTML = data.unpaidInvoices.map(inv => `
+            <div class="invoice-item">
+              <div class="invoice-info">
+                <div class="invoice-number">${inv.invoiceNumber}</div>
+                <div class="invoice-date">${new Date(inv.date).toLocaleDateString()}</div>
+              </div>
+              <div class="invoice-amount">₱${inv.totalAmount.toFixed(2)}</div>
+            </div>
+          `).join('');
+        }
+      }
+    } catch (error) {
+      console.error('Error loading dashboard:', error);
+    }
+  }
+
+  loadDashboard();
+</script>

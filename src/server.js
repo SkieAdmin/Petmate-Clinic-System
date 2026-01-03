@@ -7,6 +7,8 @@ const expressLayouts = require('express-ejs-layouts');
 const session = require('express-session');
 const errorHandler = require('./middlewares/errorHandler');
 const { authenticate, redirectIfAuthenticated, requireRole } = require('./middlewares/auth.middleware');
+const { authenticateCustomer, redirectIfCustomerAuthenticated } = require('./middlewares/customer.middleware');
+const customerService = require('./services/customer.service');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -55,10 +57,12 @@ const reportsRouter = require('./routes/reports.routes');
 const treatmentsRouter = require('./routes/treatments.routes');
 const prescriptionsRouter = require('./routes/prescriptions.routes');
 const auditLogsRouter = require('./routes/auditLog.routes');
+const customerRouter = require('./routes/customer.routes');
 
 // Public routes (no authentication required)
 app.use('/api/auth', authRouter);
 app.use('/api/public', publicRouter);
+app.use('/api/customer', customerRouter);
 
 // Middleware to block doctors from certain routes
 const blockDoctor = (req, res, next) => {
@@ -126,8 +130,43 @@ app.get('/register', redirectIfAuthenticated, (req, res) => {
   res.render('register', { title: 'Register', layout: false });
 });
 
+// Redirect old public booking to customer registration
 app.get('/get_appoint', (req, res) => {
-  res.render('book-appointment', { title: 'Book Appointment', layout: false });
+  res.redirect('/customer/register');
+});
+
+// Customer Portal Web Routes
+app.get('/customer/login', redirectIfCustomerAuthenticated, (req, res) => {
+  res.render('customer/login', { title: 'Customer Login', layout: false });
+});
+
+app.get('/customer/register', redirectIfCustomerAuthenticated, (req, res) => {
+  res.render('customer/register', { title: 'Customer Registration', layout: false });
+});
+
+app.get('/customer/dashboard', authenticateCustomer, async (req, res) => {
+  const customer = await customerService.getProfile(req.customer.clientId);
+  res.render('customer/dashboard', { title: 'Dashboard', customer, layout: 'customer/layout' });
+});
+
+app.get('/customer/pets', authenticateCustomer, async (req, res) => {
+  const customer = await customerService.getProfile(req.customer.clientId);
+  res.render('customer/pets', { title: 'My Pets', customer, layout: 'customer/layout' });
+});
+
+app.get('/customer/appointments', authenticateCustomer, async (req, res) => {
+  const customer = await customerService.getProfile(req.customer.clientId);
+  res.render('customer/appointments', { title: 'Appointments', customer, layout: 'customer/layout' });
+});
+
+app.get('/customer/invoices', authenticateCustomer, async (req, res) => {
+  const customer = await customerService.getProfile(req.customer.clientId);
+  res.render('customer/invoices', { title: 'Invoices', customer, layout: 'customer/layout' });
+});
+
+app.get('/customer/profile', authenticateCustomer, async (req, res) => {
+  const customer = await customerService.getProfile(req.customer.clientId);
+  res.render('customer/profile', { title: 'Profile', customer, layout: 'customer/layout' });
 });
 
 // Protected web routes

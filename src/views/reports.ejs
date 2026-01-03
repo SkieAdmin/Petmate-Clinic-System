@@ -104,7 +104,7 @@
         const data = result.data;
         document.getElementById('totalClients').textContent = data.clients.total;
         document.getElementById('totalPatients').textContent = data.patients.total;
-        document.getElementById('totalRevenue').textContent = '$' + data.revenue.total.toFixed(2);
+        document.getElementById('totalRevenue').textContent = '₱' + data.revenue.total.toFixed(2);
         document.getElementById('totalInvoices').textContent = data.invoices.total;
       }
     } catch (error) {

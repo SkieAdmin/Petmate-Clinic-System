@@ -1,0 +1,434 @@
+<div class="page-header">
+  <h2><i class="fas fa-calendar-alt"></i> Appointments</h2>
+  <button class="btn btn-primary" onclick="showBookModal()">
+    <i class="fas fa-plus"></i> Book Appointment
+  </button>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('upcoming')">Upcoming</button>
+  <button class="tab" onclick="showTab('past')">Past</button>
+  <button class="tab" onclick="showTab('all')">All</button>
+</div>
+
+<div id="appointmentsContainer">
+  <div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading appointments...</div>
+</div>
+
+<!-- Book Appointment Modal -->
+<div id="bookModal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3><i class="fas fa-calendar-plus"></i> Book Appointment</h3>
+      <button class="close-btn" onclick="closeModal()">&times;</button>
+    </div>
+    <form id="bookForm">
+      <div class="form-group">
+        <label for="petSelect">Select Pet *</label>
+        <select id="petSelect" name="patientId" required>
+          <option value="">Loading pets...</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="appointmentDate">Date *</label>
+          <input type="date" id="appointmentDate" name="date" required>
+        </div>
+        <div class="form-group">
+          <label for="appointmentTime">Time *</label>
+          <input type="time" id="appointmentTime" name="time" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="appointmentReason">Reason for Visit *</label>
+        <select id="appointmentReason" name="reason" required>
+          <option value="">Select reason</option>
+          <option value="General Checkup">General Checkup</option>
+          <option value="Vaccination">Vaccination</option>
+          <option value="Illness/Injury">Illness/Injury</option>
+          <option value="Dental Care">Dental Care</option>
+          <option value="Grooming">Grooming</option>
+          <option value="Surgery Consultation">Surgery Consultation</option>
+          <option value="Follow-up Visit">Follow-up Visit</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="appointmentNotes">Additional Notes</label>
+        <textarea id="appointmentNotes" name="notes" rows="3" placeholder="Any additional information for the vet"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Book Appointment</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<style>
+  .tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .tab {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    background: #e9ecef;
+    color: #495057;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+
+  .tab:hover {
+    background: #dee2e6;
+  }
+
+  .tab.active {
+    background: #2d6a4f;
+    color: white;
+  }
+
+  .appointments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .appointment-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .appointment-left {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+  }
+
+  .appointment-date-box {
+    text-align: center;
+    min-width: 70px;
+  }
+
+  .appointment-day {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #2d6a4f;
+  }
+
+  .appointment-month {
+    font-size: 0.875rem;
+    color: #6c757d;
+    text-transform: uppercase;
+  }
+
+  .appointment-details h4 {
+    margin: 0 0 0.25rem 0;
+    color: #1b4332;
+  }
+
+  .appointment-pet {
+    color: #6c757d;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .appointment-time {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #495057;
+    font-size: 0.875rem;
+  }
+
+  .appointment-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .badge-pending { background: #fff3cd; color: #856404; }
+  .badge-approved, .badge-scheduled { background: #d4edda; color: #155724; }
+  .badge-completed { background: #cce5ff; color: #004085; }
+  .badge-canceled { background: #f8d7da; color: #721c24; }
+  .badge-arrived { background: #d1ecf1; color: #0c5460; }
+
+  .btn-cancel {
+    padding: 0.5rem 1rem;
+    background: #f8d7da;
+    color: #721c24;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.875rem;
+  }
+
+  .btn-cancel:hover {
+    background: #f5c6cb;
+  }
+
+  .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  .modal-content {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .modal-header h3 { margin: 0; color: #1b4332; }
+
+  .close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #6c757d;
+  }
+
+  .modal-content form { padding: 1.5rem; }
+
+  .modal-footer {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 1rem;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #6c757d;
+    background: white;
+    border-radius: 12px;
+  }
+
+  .empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.3;
+  }
+
+  .loading {
+    text-align: center;
+    padding: 3rem;
+    color: #6c757d;
+  }
+</style>
+
+<script>
+  let allAppointments = [];
+  let currentFilter = 'upcoming';
+
+  async function loadAppointments() {
+    try {
+      const response = await fetch('/api/customer/appointments');
+      const result = await response.json();
+
+      if (result.success) {
+        allAppointments = result.data;
+        renderAppointments();
+      }
+    } catch (error) {
+      console.error('Error loading appointments:', error);
+    }
+  }
+
+  function showTab(filter) {
+    currentFilter = filter;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    renderAppointments();
+  }
+
+  function renderAppointments() {
+    const container = document.getElementById('appointmentsContainer');
+    const now = new Date();
+
+    let filtered = allAppointments;
+
+    if (currentFilter === 'upcoming') {
+      filtered = allAppointments.filter(a =>
+        new Date(a.dateTime) >= now && !['Completed', 'Canceled'].includes(a.status)
+      );
+    } else if (currentFilter === 'past') {
+      filtered = allAppointments.filter(a =>
+        new Date(a.dateTime) < now || ['Completed', 'Canceled'].includes(a.status)
+      );
+    }
+
+    if (filtered.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <i class="fas fa-calendar-times"></i>
+          <h3>No appointments found</h3>
+          <p>${currentFilter === 'upcoming' ? 'Book your first appointment to get started' : 'No past appointments'}</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = `<div class="appointments-list">${filtered.map(apt => {
+      const date = new Date(apt.dateTime);
+      const canCancel = !['Completed', 'Canceled'].includes(apt.status) && date > now;
+
+      return `
+        <div class="appointment-card">
+          <div class="appointment-left">
+            <div class="appointment-date-box">
+              <div class="appointment-day">${date.getDate()}</div>
+              <div class="appointment-month">${date.toLocaleString('default', { month: 'short' })}</div>
+            </div>
+            <div class="appointment-details">
+              <h4>${apt.reason || 'General Visit'}</h4>
+              <div class="appointment-pet"><i class="fas fa-paw"></i> ${apt.patient.name}</div>
+              <div class="appointment-time">
+                <i class="fas fa-clock"></i>
+                ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                ${apt.doctor ? ` | Dr. ${apt.doctor.fullName}` : ''}
+              </div>
+            </div>
+          </div>
+          <div class="appointment-right">
+            <span class="badge badge-${apt.status.toLowerCase()}">${apt.status}</span>
+            ${canCancel ? `<button class="btn-cancel" onclick="cancelAppointment(${apt.id})">Cancel</button>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('')}</div>`;
+  }
+
+  async function loadPetsForBooking() {
+    try {
+      const response = await fetch('/api/customer/pets');
+      const result = await response.json();
+
+      const select = document.getElementById('petSelect');
+
+      if (result.success && result.data.length > 0) {
+        select.innerHTML = `<option value="">Select a pet</option>` +
+          result.data.map(pet => `<option value="${pet.id}">${pet.name} (${pet.species})</option>`).join('');
+      } else {
+        select.innerHTML = '<option value="">No pets found - add a pet first</option>';
+      }
+    } catch (error) {
+      console.error('Error loading pets:', error);
+    }
+  }
+
+  function showBookModal() {
+    loadPetsForBooking();
+    // Set minimum date to tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    document.getElementById('appointmentDate').min = tomorrow.toISOString().split('T')[0];
+    document.getElementById('bookModal').style.display = 'flex';
+  }
+
+  function closeModal() {
+    document.getElementById('bookModal').style.display = 'none';
+    document.getElementById('bookForm').reset();
+  }
+
+  document.getElementById('bookForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const date = document.getElementById('appointmentDate').value;
+    const time = document.getElementById('appointmentTime').value;
+    const dateTime = new Date(`${date}T${time}`).toISOString();
+
+    const formData = {
+      patientId: document.getElementById('petSelect').value,
+      dateTime: dateTime,
+      reason: document.getElementById('appointmentReason').value,
+      notes: document.getElementById('appointmentNotes').value || null,
+    };
+
+    try {
+      const response = await fetch('/api/customer/appointments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        closeModal();
+        loadAppointments();
+        alert('Appointment booked successfully! It is pending clinic approval.');
+      } else {
+        alert(result.message || 'Failed to book appointment');
+      }
+    } catch (error) {
+      alert('An error occurred. Please try again.');
+    }
+  });
+
+  async function cancelAppointment(id) {
+    if (!confirm('Are you sure you want to cancel this appointment?')) return;
+
+    try {
+      const response = await fetch(`/api/customer/appointments/${id}/cancel`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        loadAppointments();
+        alert('Appointment cancelled successfully');
+      } else {
+        alert(result.message || 'Failed to cancel appointment');
+      }
+    } catch (error) {
+      alert('An error occurred. Please try again.');
+    }
+  }
+
+  // Close modal when clicking outside
+  document.getElementById('bookModal').addEventListener('click', (e) => {
+    if (e.target.id === 'bookModal') closeModal();
+  });
+
+  loadAppointments();
+</script>

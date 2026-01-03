@@ -1,0 +1,398 @@
+<div class="page-header">
+  <h2><i class="fas fa-file-invoice-dollar"></i> My Invoices</h2>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('unpaid')">Unpaid</button>
+  <button class="tab" onclick="showTab('paid')">Paid</button>
+  <button class="tab" onclick="showTab('all')">All</button>
+</div>
+
+<div id="invoicesContainer">
+  <div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading invoices...</div>
+</div>
+
+<!-- Invoice Details Modal -->
+<div id="invoiceModal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3><i class="fas fa-file-invoice"></i> Invoice Details</h3>
+      <button class="close-btn" onclick="closeModal()">&times;</button>
+    </div>
+    <div id="invoiceDetails">
+      <!-- Will be populated dynamically -->
+    </div>
+  </div>
+</div>
+
+<style>
+  .tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .tab {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    background: #e9ecef;
+    color: #495057;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+
+  .tab:hover { background: #dee2e6; }
+  .tab.active { background: #2d6a4f; color: white; }
+
+  .invoices-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .invoice-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .invoice-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  }
+
+  .invoice-left {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+  }
+
+  .invoice-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+  }
+
+  .invoice-icon.unpaid {
+    background: #f8d7da;
+    color: #721c24;
+  }
+
+  .invoice-icon.paid {
+    background: #d4edda;
+    color: #155724;
+  }
+
+  .invoice-details h4 {
+    margin: 0 0 0.25rem 0;
+    color: #1b4332;
+  }
+
+  .invoice-date {
+    color: #6c757d;
+    font-size: 0.875rem;
+  }
+
+  .invoice-right {
+    text-align: right;
+  }
+
+  .invoice-amount {
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+
+  .invoice-amount.unpaid { color: #dc3545; }
+  .invoice-amount.paid { color: #28a745; }
+
+  .badge {
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-top: 0.25rem;
+    display: inline-block;
+  }
+
+  .badge-unpaid { background: #f8d7da; color: #721c24; }
+  .badge-paid { background: #d4edda; color: #155724; }
+
+  .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  .modal-content {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .modal-header h3 { margin: 0; color: #1b4332; }
+
+  .close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #6c757d;
+  }
+
+  .invoice-detail-content {
+    padding: 1.5rem;
+  }
+
+  .invoice-header-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e9ecef;
+  }
+
+  .items-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.5rem;
+  }
+
+  .items-table th {
+    text-align: left;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    color: #495057;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+  }
+
+  .items-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #e9ecef;
+  }
+
+  .items-table .text-right {
+    text-align: right;
+  }
+
+  .invoice-total {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.25rem;
+    font-weight: 700;
+    padding-top: 1rem;
+    border-top: 2px solid #1b4332;
+  }
+
+  .payment-info {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: #d4edda;
+    border-radius: 8px;
+    color: #155724;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #6c757d;
+    background: white;
+    border-radius: 12px;
+  }
+
+  .empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.3;
+  }
+
+  .loading {
+    text-align: center;
+    padding: 3rem;
+    color: #6c757d;
+  }
+</style>
+
+<script>
+  let allInvoices = [];
+  let currentFilter = 'unpaid';
+
+  async function loadInvoices() {
+    try {
+      const response = await fetch('/api/customer/invoices');
+      const result = await response.json();
+
+      if (result.success) {
+        allInvoices = result.data;
+        renderInvoices();
+      }
+    } catch (error) {
+      console.error('Error loading invoices:', error);
+    }
+  }
+
+  function showTab(filter) {
+    currentFilter = filter;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    renderInvoices();
+  }
+
+  function renderInvoices() {
+    const container = document.getElementById('invoicesContainer');
+
+    let filtered = allInvoices;
+
+    if (currentFilter === 'unpaid') {
+      filtered = allInvoices.filter(i => i.status === 'Unpaid');
+    } else if (currentFilter === 'paid') {
+      filtered = allInvoices.filter(i => i.status === 'Paid');
+    }
+
+    if (filtered.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <i class="fas fa-file-invoice"></i>
+          <h3>No invoices found</h3>
+          <p>${currentFilter === 'unpaid' ? 'Great! You have no outstanding invoices.' : 'No invoices in this category.'}</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = `<div class="invoices-list">${filtered.map(inv => `
+      <div class="invoice-card" onclick="showInvoiceDetails(${inv.id})">
+        <div class="invoice-left">
+          <div class="invoice-icon ${inv.status.toLowerCase()}">
+            <i class="fas fa-file-invoice-dollar"></i>
+          </div>
+          <div class="invoice-details">
+            <h4>${inv.invoiceNumber}</h4>
+            <div class="invoice-date">
+              <i class="fas fa-calendar"></i> ${new Date(inv.date).toLocaleDateString()}
+            </div>
+          </div>
+        </div>
+        <div class="invoice-right">
+          <div class="invoice-amount ${inv.status.toLowerCase()}">₱${inv.totalAmount.toFixed(2)}</div>
+          <span class="badge badge-${inv.status.toLowerCase()}">${inv.status}</span>
+        </div>
+      </div>
+    `).join('')}</div>`;
+  }
+
+  async function showInvoiceDetails(id) {
+    try {
+      const response = await fetch(`/api/customer/invoices/${id}`);
+      const result = await response.json();
+
+      if (result.success) {
+        const inv = result.data;
+
+        document.getElementById('invoiceDetails').innerHTML = `
+          <div class="invoice-detail-content">
+            <div class="invoice-header-info">
+              <div>
+                <h4>${inv.invoiceNumber}</h4>
+                <p>Date: ${new Date(inv.date).toLocaleDateString()}</p>
+              </div>
+              <div>
+                <span class="badge badge-${inv.status.toLowerCase()}" style="font-size: 0.875rem;">${inv.status}</span>
+              </div>
+            </div>
+
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th class="text-right">Qty</th>
+                  <th class="text-right">Price</th>
+                  <th class="text-right">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${inv.items.map(item => `
+                  <tr>
+                    <td>${item.item.name}</td>
+                    <td class="text-right">${item.quantity}</td>
+                    <td class="text-right">₱${item.priceEach.toFixed(2)}</td>
+                    <td class="text-right">₱${item.subtotal.toFixed(2)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+
+            <div class="invoice-total">
+              <span>Total Amount:</span>
+              <span>₱${inv.totalAmount.toFixed(2)}</span>
+            </div>
+
+            ${inv.payment ? `
+              <div class="payment-info">
+                <strong><i class="fas fa-check-circle"></i> Payment Received</strong>
+                <p>
+                  Method: ${inv.payment.paymentMethod}<br>
+                  Date: ${new Date(inv.payment.paymentDate).toLocaleDateString()}
+                  ${inv.payment.gcashReference ? `<br>GCash Ref: ${inv.payment.gcashReference}` : ''}
+                </p>
+              </div>
+            ` : `
+              <div style="margin-top: 1.5rem; padding: 1rem; background: #fff3cd; border-radius: 8px; color: #856404;">
+                <strong><i class="fas fa-exclamation-triangle"></i> Payment Pending</strong>
+                <p>Please visit the clinic to complete payment.</p>
+              </div>
+            `}
+
+            ${inv.notes ? `<p style="margin-top: 1rem; color: #6c757d;"><i class="fas fa-sticky-note"></i> ${inv.notes}</p>` : ''}
+          </div>
+        `;
+
+        document.getElementById('invoiceModal').style.display = 'flex';
+      }
+    } catch (error) {
+      console.error('Error loading invoice details:', error);
+    }
+  }
+
+  function closeModal() {
+    document.getElementById('invoiceModal').style.display = 'none';
+  }
+
+  // Close modal when clicking outside
+  document.getElementById('invoiceModal').addEventListener('click', (e) => {
+    if (e.target.id === 'invoiceModal') closeModal();
+  });
+
+  loadInvoices();
+</script>

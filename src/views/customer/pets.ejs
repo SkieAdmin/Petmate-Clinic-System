@@ -1,0 +1,348 @@
+<div class="page-header">
+  <h2><i class="fas fa-paw"></i> My Pets</h2>
+  <button class="btn btn-primary" onclick="showAddPetModal()">
+    <i class="fas fa-plus"></i> Add Pet
+  </button>
+</div>
+
+<div id="petsContainer">
+  <div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading pets...</div>
+</div>
+
+<!-- Add Pet Modal -->
+<div id="addPetModal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3><i class="fas fa-plus"></i> Add New Pet</h3>
+      <button class="close-btn" onclick="closeModal()">&times;</button>
+    </div>
+    <form id="addPetForm">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="petName">Pet Name *</label>
+          <input type="text" id="petName" name="name" required placeholder="Enter pet name">
+        </div>
+        <div class="form-group">
+          <label for="petSpecies">Species *</label>
+          <select id="petSpecies" name="species" required>
+            <option value="">Select species</option>
+            <option value="Dog">Dog</option>
+            <option value="Cat">Cat</option>
+            <option value="Bird">Bird</option>
+            <option value="Rabbit">Rabbit</option>
+            <option value="Hamster">Hamster</option>
+            <option value="Guinea Pig">Guinea Pig</option>
+            <option value="Reptile">Reptile</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="petBreed">Breed</label>
+          <input type="text" id="petBreed" name="breed" placeholder="Enter breed (optional)">
+        </div>
+        <div class="form-group">
+          <label for="petBirthDate">Birth Date</label>
+          <input type="date" id="petBirthDate" name="birthDate">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="petWeight">Weight (kg)</label>
+          <input type="number" id="petWeight" name="weight" step="0.1" placeholder="Weight in kg">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="petNotes">Notes</label>
+        <textarea id="petNotes" name="notes" rows="3" placeholder="Any special notes about your pet"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add Pet</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<style>
+  .pets-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .pet-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    overflow: hidden;
+  }
+
+  .pet-header {
+    background: linear-gradient(135deg, #2d6a4f, #1b4332);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .pet-avatar {
+    width: 60px;
+    height: 60px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+  }
+
+  .pet-name {
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+
+  .pet-species {
+    opacity: 0.9;
+    font-size: 0.875rem;
+  }
+
+  .pet-body {
+    padding: 1.5rem;
+  }
+
+  .pet-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .pet-info-item {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .pet-info-label {
+    color: #6c757d;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .pet-info-value {
+    color: #1b4332;
+    font-weight: 500;
+  }
+
+  .pet-notes {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e9ecef;
+    color: #495057;
+    font-size: 0.875rem;
+  }
+
+  .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  .modal-content {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .modal-header h3 {
+    margin: 0;
+    color: #1b4332;
+  }
+
+  .close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #6c757d;
+  }
+
+  .modal-content form {
+    padding: 1.5rem;
+  }
+
+  .modal-footer {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 1rem;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #6c757d;
+  }
+
+  .empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.3;
+  }
+
+  .loading {
+    text-align: center;
+    padding: 3rem;
+    color: #6c757d;
+  }
+</style>
+
+<script>
+  function getSpeciesIcon(species) {
+    const icons = {
+      'Dog': 'fa-dog',
+      'Cat': 'fa-cat',
+      'Bird': 'fa-dove',
+      'Rabbit': 'fa-rabbit',
+      'Hamster': 'fa-otter',
+      'Reptile': 'fa-dragon',
+    };
+    return icons[species] || 'fa-paw';
+  }
+
+  function calculateAge(birthDate) {
+    if (!birthDate) return 'Unknown';
+    const birth = new Date(birthDate);
+    const now = new Date();
+    const years = now.getFullYear() - birth.getFullYear();
+    const months = now.getMonth() - birth.getMonth();
+    if (years < 1) {
+      return months + (months === 1 ? ' month' : ' months');
+    }
+    return years + (years === 1 ? ' year' : ' years');
+  }
+
+  async function loadPets() {
+    try {
+      const response = await fetch('/api/customer/pets');
+      const result = await response.json();
+
+      const container = document.getElementById('petsContainer');
+
+      if (result.success) {
+        if (result.data.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <i class="fas fa-paw"></i>
+              <h3>No pets yet</h3>
+              <p>Add your first pet to get started</p>
+              <button class="btn btn-primary" onclick="showAddPetModal()" style="margin-top: 1rem;">
+                <i class="fas fa-plus"></i> Add Pet
+              </button>
+            </div>
+          `;
+        } else {
+          container.innerHTML = `<div class="pets-grid">${result.data.map(pet => `
+            <div class="pet-card">
+              <div class="pet-header">
+                <div class="pet-avatar">
+                  <i class="fas ${getSpeciesIcon(pet.species)}"></i>
+                </div>
+                <div>
+                  <div class="pet-name">${pet.name}</div>
+                  <div class="pet-species">${pet.species}${pet.breed ? ' - ' + pet.breed : ''}</div>
+                </div>
+              </div>
+              <div class="pet-body">
+                <div class="pet-info">
+                  <div class="pet-info-item">
+                    <span class="pet-info-label">Age</span>
+                    <span class="pet-info-value">${calculateAge(pet.birthDate)}</span>
+                  </div>
+                  <div class="pet-info-item">
+                    <span class="pet-info-label">Weight</span>
+                    <span class="pet-info-value">${pet.weight ? pet.weight + ' kg' : 'Not recorded'}</span>
+                  </div>
+                </div>
+                ${pet.notes ? `<div class="pet-notes"><i class="fas fa-sticky-note"></i> ${pet.notes}</div>` : ''}
+              </div>
+            </div>
+          `).join('')}</div>`;
+        }
+      }
+    } catch (error) {
+      console.error('Error loading pets:', error);
+    }
+  }
+
+  function showAddPetModal() {
+    document.getElementById('addPetModal').style.display = 'flex';
+  }
+
+  function closeModal() {
+    document.getElementById('addPetModal').style.display = 'none';
+    document.getElementById('addPetForm').reset();
+  }
+
+  document.getElementById('addPetForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = {
+      name: document.getElementById('petName').value,
+      species: document.getElementById('petSpecies').value,
+      breed: document.getElementById('petBreed').value || null,
+      birthDate: document.getElementById('petBirthDate').value || null,
+      weight: document.getElementById('petWeight').value || null,
+      notes: document.getElementById('petNotes').value || null,
+    };
+
+    try {
+      const response = await fetch('/api/customer/pets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        closeModal();
+        loadPets();
+        alert('Pet added successfully!');
+      } else {
+        alert(result.message || 'Failed to add pet');
+      }
+    } catch (error) {
+      alert('An error occurred. Please try again.');
+    }
+  });
+
+  // Close modal when clicking outside
+  document.getElementById('addPetModal').addEventListener('click', (e) => {
+    if (e.target.id === 'addPetModal') {
+      closeModal();
+    }
+  });
+
+  loadPets();
+</script>

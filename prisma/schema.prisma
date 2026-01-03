@@ -10,22 +10,28 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Client (Pet Owner) Model
+// Client (Pet Owner) Model - Also used for Customer Portal authentication
 model Client {
   id              Int           @id @default(autoincrement())
   name            String
   phone           String?
-  email           String?
+  email           String?       @unique  // Unique for customer authentication
   address         String?       @db.Text
   emailVerified   Boolean       @default(false)
   emailVerifiedAt DateTime?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
+  // Customer authentication fields
+  password        String?       // Hashed password (nullable for legacy clients)
+  isActive        Boolean       @default(true)
+  lastLoginAt     DateTime?
+
   // Relations
   patients     Patient[]     @relation("ClientPatients")
   invoices     Invoice[]     @relation("ClientInvoices")
 
+  @@index([email])
   @@map("clients")
 }
 

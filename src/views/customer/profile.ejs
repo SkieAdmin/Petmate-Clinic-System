@@ -1,0 +1,322 @@
+<div class="page-header">
+  <h2><i class="fas fa-user-cog"></i> My Profile</h2>
+</div>
+
+<div class="profile-grid">
+  <!-- Profile Information Card -->
+  <div class="card">
+    <h3><i class="fas fa-user"></i> Personal Information</h3>
+    <div id="profileMessage" class="message" style="display: none;"></div>
+    <form id="profileForm">
+      <div class="form-group">
+        <label for="profileName">Full Name *</label>
+        <input type="text" id="profileName" name="name" required value="<%= customer.name %>">
+      </div>
+      <div class="form-group">
+        <label for="profileEmail">Email Address</label>
+        <input type="email" id="profileEmail" value="<%= customer.email %>" disabled>
+        <small class="form-text">Email cannot be changed</small>
+      </div>
+      <div class="form-group">
+        <label for="profilePhone">Phone Number</label>
+        <input type="tel" id="profilePhone" name="phone" value="<%= customer.phone || '' %>" placeholder="Enter phone number">
+      </div>
+      <div class="form-group">
+        <label for="profileAddress">Address</label>
+        <textarea id="profileAddress" name="address" rows="3" placeholder="Enter your address"><%= customer.address || '' %></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary">
+        <i class="fas fa-save"></i> Save Changes
+      </button>
+    </form>
+  </div>
+
+  <!-- Change Password Card -->
+  <div class="card">
+    <h3><i class="fas fa-lock"></i> Change Password</h3>
+    <div id="passwordMessage" class="message" style="display: none;"></div>
+    <form id="passwordForm">
+      <div class="form-group">
+        <label for="currentPassword">Current Password *</label>
+        <div class="password-input">
+          <input type="password" id="currentPassword" name="currentPassword" required placeholder="Enter current password">
+          <button type="button" class="password-toggle" onclick="togglePassword('currentPassword')">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="newPassword">New Password *</label>
+        <div class="password-input">
+          <input type="password" id="newPassword" name="newPassword" required placeholder="Minimum 6 characters" minlength="6">
+          <button type="button" class="password-toggle" onclick="togglePassword('newPassword')">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="confirmNewPassword">Confirm New Password *</label>
+        <div class="password-input">
+          <input type="password" id="confirmNewPassword" name="confirmNewPassword" required placeholder="Confirm new password">
+          <button type="button" class="password-toggle" onclick="togglePassword('confirmNewPassword')">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary">
+        <i class="fas fa-key"></i> Change Password
+      </button>
+    </form>
+  </div>
+
+  <!-- Account Info Card -->
+  <div class="card">
+    <h3><i class="fas fa-info-circle"></i> Account Information</h3>
+    <div class="account-info">
+      <div class="info-item">
+        <span class="info-label">Member Since</span>
+        <span class="info-value"><%= new Date(customer.createdAt).toLocaleDateString() %></span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Email Verified</span>
+        <span class="info-value">
+          <% if (customer.emailVerified) { %>
+            <i class="fas fa-check-circle" style="color: #28a745;"></i> Verified
+          <% } else { %>
+            <i class="fas fa-times-circle" style="color: #dc3545;"></i> Not Verified
+          <% } %>
+        </span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Last Login</span>
+        <span class="info-value">
+          <%= customer.lastLoginAt ? new Date(customer.lastLoginAt).toLocaleString() : 'First login' %>
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .profile-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 768px) {
+    .profile-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    padding: 1.5rem;
+  }
+
+  .card h3 {
+    margin: 0 0 1.5rem 0;
+    color: #1b4332;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #e9ecef;
+  }
+
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #495057;
+    font-weight: 500;
+  }
+
+  .form-group input,
+  .form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .form-group input:focus,
+  .form-group textarea:focus {
+    border-color: #2d6a4f;
+    box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.1);
+    outline: none;
+  }
+
+  .form-group input:disabled {
+    background: #e9ecef;
+    cursor: not-allowed;
+  }
+
+  .form-text {
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+  }
+
+  .password-input {
+    position: relative;
+  }
+
+  .password-input input {
+    padding-right: 40px;
+  }
+
+  .password-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #6c757d;
+    cursor: pointer;
+  }
+
+  .message {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+  }
+
+  .message.success {
+    background: #d4edda;
+    color: #155724;
+  }
+
+  .message.error {
+    background: #f8d7da;
+    color: #721c24;
+  }
+
+  .account-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .info-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e9ecef;
+  }
+
+  .info-item:last-child {
+    border-bottom: none;
+  }
+
+  .info-label {
+    color: #6c757d;
+    font-size: 0.875rem;
+  }
+
+  .info-value {
+    color: #1b4332;
+    font-weight: 500;
+  }
+</style>
+
+<script>
+  function togglePassword(inputId) {
+    const input = document.getElementById(inputId);
+    const icon = input.nextElementSibling.querySelector('i');
+
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.classList.remove('fa-eye');
+      icon.classList.add('fa-eye-slash');
+    } else {
+      input.type = 'password';
+      icon.classList.remove('fa-eye-slash');
+      icon.classList.add('fa-eye');
+    }
+  }
+
+  function showMessage(elementId, text, type) {
+    const el = document.getElementById(elementId);
+    el.textContent = text;
+    el.className = 'message ' + type;
+    el.style.display = 'block';
+
+    setTimeout(() => {
+      el.style.display = 'none';
+    }, 5000);
+  }
+
+  // Profile Form
+  document.getElementById('profileForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = {
+      name: document.getElementById('profileName').value,
+      phone: document.getElementById('profilePhone').value || null,
+      address: document.getElementById('profileAddress').value || null,
+    };
+
+    try {
+      const response = await fetch('/api/customer/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        showMessage('profileMessage', 'Profile updated successfully!', 'success');
+      } else {
+        showMessage('profileMessage', result.message || 'Failed to update profile', 'error');
+      }
+    } catch (error) {
+      showMessage('profileMessage', 'An error occurred. Please try again.', 'error');
+    }
+  });
+
+  // Password Form
+  document.getElementById('passwordForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const currentPassword = document.getElementById('currentPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+
+    if (newPassword !== confirmNewPassword) {
+      showMessage('passwordMessage', 'New passwords do not match', 'error');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      showMessage('passwordMessage', 'Password must be at least 6 characters', 'error');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/customer/change-password', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        showMessage('passwordMessage', 'Password changed successfully!', 'success');
+        document.getElementById('passwordForm').reset();
+      } else {
+        showMessage('passwordMessage', result.message || 'Failed to change password', 'error');
+      }
+    } catch (error) {
+      showMessage('passwordMessage', 'An error occurred. Please try again.', 'error');
+    }
+  });
+</script>

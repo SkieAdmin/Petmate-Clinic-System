@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - Customer Portal | Petmate Clinic</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .sidebar-header h1 { font-size: 1.3rem; }
+    .customer-badge {
+      background: linear-gradient(135deg, #52b788, #2d6a4f);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      margin-left: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <h1><i class="fas fa-paw"></i> Petmate <span class="customer-badge">Customer</span></h1>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/customer/dashboard" class="nav-item <%= title === 'Dashboard' ? 'active' : '' %>">
+          <i class="fas fa-home"></i> Dashboard
+        </a>
+        <a href="/customer/pets" class="nav-item <%= title === 'My Pets' ? 'active' : '' %>">
+          <i class="fas fa-paw"></i> My Pets
+        </a>
+        <a href="/customer/appointments" class="nav-item <%= title === 'Appointments' ? 'active' : '' %>">
+          <i class="fas fa-calendar-alt"></i> Appointments
+        </a>
+        <a href="/customer/invoices" class="nav-item <%= title === 'Invoices' ? 'active' : '' %>">
+          <i class="fas fa-file-invoice-dollar"></i> Invoices
+        </a>
+        <a href="/customer/profile" class="nav-item <%= title === 'Profile' ? 'active' : '' %>">
+          <i class="fas fa-user-cog"></i> Profile
+        </a>
+      </nav>
+
+      <!-- User Profile Section -->
+      <div class="sidebar-footer">
+        <div class="user-profile">
+          <div class="user-avatar">
+            <i class="fas fa-user-circle"></i>
+          </div>
+          <div class="user-info">
+            <div class="user-name"><%= typeof customer !== 'undefined' && customer.name ? customer.name : 'Customer' %></div>
+            <div class="user-role">Pet Owner</div>
+          </div>
+        </div>
+        <button class="logout-btn" onclick="handleLogout()">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+      </div>
+    </aside>
+
+    <!-- Mobile Menu Toggle -->
+    <button class="menu-toggle" id="menuToggle">
+      <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <%- body %>
+    </main>
+  </div>
+
+  <script>
+    // Mobile menu toggle
+    const menuToggle = document.getElementById('menuToggle');
+    const sidebar = document.getElementById('sidebar');
+
+    menuToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('active');
+    });
+
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', (e) => {
+      if (window.innerWidth <= 768) {
+        if (!sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
+          sidebar.classList.remove('active');
+        }
+      }
+    });
+
+    // Handle logout
+    async function handleLogout() {
+      if (confirm('Are you sure you want to logout?')) {
+        try {
+          const response = await fetch('/api/customer/logout', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (response.ok) {
+            window.location.href = '/customer/login';
+          } else {
+            alert('Logout failed. Please try again.');
+          }
+        } catch (error) {
+          console.error('Logout error:', error);
+          alert('An error occurred during logout.');
+        }
+      }
+    }
+  </script>
+</body>
+</html>

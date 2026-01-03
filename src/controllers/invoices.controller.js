@@ -165,8 +165,8 @@ class InvoiceController {
         .fontSize(9)
         .text(item.item.name, 50, position)
         .text(item.quantity.toString(), 300, position)
-        .text(`$${item.priceEach.toFixed(2)}`, 380, position)
-        .text(`$${item.subtotal.toFixed(2)}`, 460, position);
+        .text(`₱${item.priceEach.toFixed(2)}`, 380, position)
+        .text(`₱${item.subtotal.toFixed(2)}`, 460, position);
 
       position += 20;
     });
@@ -185,7 +185,7 @@ class InvoiceController {
       .fontSize(12)
       .fillColor('#2d6a4f')
       .text('TOTAL:', 380, position)
-      .text(`$${invoice.totalAmount.toFixed(2)}`, 460, position);
+      .text(`₱${invoice.totalAmount.toFixed(2)}`, 460, position);
 
     // Notes
     if (invoice.notes) {
