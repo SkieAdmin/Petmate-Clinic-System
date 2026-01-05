@@ -1,0 +1,441 @@
+<div class="page-header">
+  <h2><i class="fas fa-walking"></i> Walk-in Invoices</h2>
+  <p>Create invoices for walk-in customers without registered accounts</p>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="filter-bar" style="margin: 0; flex: 1;">
+      <input type="text" id="searchInput" placeholder="Search invoices..." class="form-control" style="max-width: 250px;" onchange="filterInvoices()">
+      <select id="statusFilter" class="form-control" style="max-width: 150px;" onchange="filterInvoices()">
+        <option value="">All Status</option>
+        <option value="Unpaid">Unpaid</option>
+        <option value="Paid">Paid</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="openInvoiceModal()">
+      <i class="fas fa-plus"></i> New Walk-in Invoice
+    </button>
+  </div>
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Invoice #</th>
+          <th>Date</th>
+          <th>Customer</th>
+          <th>Pet</th>
+          <th>Total</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="invoicesTable">
+        <tr><td colspan="7" class="text-center"><div class="spinner"></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Walk-in Invoice Modal -->
+<div class="modal-overlay" id="invoiceModal">
+  <div class="modal" style="max-width: 800px;">
+    <div class="modal-header">
+      <h3>New Walk-in Invoice</h3>
+      <button class="modal-close" onclick="closeInvoiceModal()">&times;</button>
+    </div>
+    <form id="invoiceForm">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Customer Name *</label>
+          <input type="text" id="customerName" class="form-control" required placeholder="Full name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone Number</label>
+          <input type="text" id="customerPhone" class="form-control" placeholder="Contact number">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Address</label>
+        <input type="text" id="customerAddress" class="form-control" placeholder="Customer address">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Pet Name</label>
+          <input type="text" id="petName" class="form-control" placeholder="Pet name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Pet Species</label>
+          <select id="petSpecies" class="form-control">
+            <option value="">Select</option>
+            <option value="Dog">Dog</option>
+            <option value="Cat">Cat</option>
+            <option value="Bird">Bird</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+
+      <h4>Items</h4>
+      <div id="itemsContainer">
+        <div class="form-row item-row">
+          <div class="form-group" style="flex: 3;">
+            <select class="form-control item-select" onchange="updateItemPrice(this)">
+              <option value="">Select Item</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <input type="number" class="form-control item-qty" value="1" min="1" onchange="calculateTotal()">
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <input type="number" class="form-control item-price" step="0.01" placeholder="Price" onchange="calculateTotal()">
+          </div>
+          <div class="form-group" style="flex: 0.5;">
+            <button type="button" class="btn btn-danger btn-sm" onclick="removeItem(this)"><i class="fas fa-times"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <button type="button" class="btn btn-secondary btn-sm" onclick="addItem()">
+        <i class="fas fa-plus"></i> Add Item
+      </button>
+
+      <div class="mt-3">
+        <h3>Total: ₱<span id="totalAmount">0.00</span></h3>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea id="notes" class="form-control textarea" rows="2"></textarea>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeInvoiceModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Create Invoice</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal-overlay" id="paymentModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Process Payment</h3>
+      <button class="modal-close" onclick="closePaymentModal()">&times;</button>
+    </div>
+    <form id="paymentForm">
+      <input type="hidden" id="paymentInvoiceId">
+
+      <div class="form-group">
+        <label class="form-label">Total Amount</label>
+        <h2 id="paymentTotal">₱0.00</h2>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Payment Method *</label>
+        <select id="paymentMethod" class="form-control" required onchange="togglePaymentFields()">
+          <option value="Cash">Cash</option>
+          <option value="GCash">GCash</option>
+          <option value="Mixed">Mixed</option>
+        </select>
+      </div>
+
+      <div id="cashFields">
+        <div class="form-group">
+          <label class="form-label">Cash Amount</label>
+          <input type="number" id="cashAmount" class="form-control" step="0.01">
+        </div>
+      </div>
+
+      <div id="gcashFields" style="display: none;">
+        <div class="form-group">
+          <label class="form-label">GCash Amount</label>
+          <input type="number" id="gcashAmount" class="form-control" step="0.01">
+        </div>
+        <div class="form-group">
+          <label class="form-label">GCash Reference</label>
+          <input type="text" id="gcashReference" class="form-control">
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closePaymentModal()">Cancel</button>
+        <button type="submit" class="btn btn-success"><i class="fas fa-check"></i> Confirm Payment</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  let invoices = [];
+  let items = [];
+
+  document.addEventListener('DOMContentLoaded', function() {
+    loadItems();
+    loadInvoices();
+    document.getElementById('invoiceForm').addEventListener('submit', handleInvoiceSubmit);
+    document.getElementById('paymentForm').addEventListener('submit', handlePaymentSubmit);
+  });
+
+  async function loadItems() {
+    try {
+      const response = await fetch('/api/items');
+      const result = await response.json();
+      if (result.success) {
+        items = result.data;
+        populateItemSelects();
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  }
+
+  function populateItemSelects() {
+    document.querySelectorAll('.item-select').forEach(select => {
+      const currentValue = select.value;
+      select.innerHTML = '<option value="">Select Item</option>';
+      items.forEach(item => {
+        select.innerHTML += `<option value="${item.id}" data-price="${item.price}">${item.name} (₱${item.price.toFixed(2)})</option>`;
+      });
+      select.value = currentValue;
+    });
+  }
+
+  function updateItemPrice(select) {
+    const row = select.closest('.item-row');
+    const priceInput = row.querySelector('.item-price');
+    const selectedOption = select.options[select.selectedIndex];
+    if (selectedOption && selectedOption.dataset.price) {
+      priceInput.value = selectedOption.dataset.price;
+    }
+    calculateTotal();
+  }
+
+  function calculateTotal() {
+    let total = 0;
+    document.querySelectorAll('.item-row').forEach(row => {
+      const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+      const price = parseFloat(row.querySelector('.item-price').value) || 0;
+      total += qty * price;
+    });
+    document.getElementById('totalAmount').textContent = total.toFixed(2);
+  }
+
+  function addItem() {
+    const container = document.getElementById('itemsContainer');
+    const row = document.createElement('div');
+    row.className = 'form-row item-row';
+    row.innerHTML = `
+      <div class="form-group" style="flex: 3;">
+        <select class="form-control item-select" onchange="updateItemPrice(this)">
+          <option value="">Select Item</option>
+        </select>
+      </div>
+      <div class="form-group" style="flex: 1;">
+        <input type="number" class="form-control item-qty" value="1" min="1" onchange="calculateTotal()">
+      </div>
+      <div class="form-group" style="flex: 1;">
+        <input type="number" class="form-control item-price" step="0.01" placeholder="Price" onchange="calculateTotal()">
+      </div>
+      <div class="form-group" style="flex: 0.5;">
+        <button type="button" class="btn btn-danger btn-sm" onclick="removeItem(this)"><i class="fas fa-times"></i></button>
+      </div>
+    `;
+    container.appendChild(row);
+    populateItemSelects();
+  }
+
+  function removeItem(btn) {
+    const rows = document.querySelectorAll('.item-row');
+    if (rows.length > 1) {
+      btn.closest('.item-row').remove();
+      calculateTotal();
+    }
+  }
+
+  async function loadInvoices() {
+    try {
+      const response = await fetch('/api/walkin-invoices');
+      const result = await response.json();
+      if (result.success) {
+        invoices = result.data;
+        renderInvoices();
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  }
+
+  function renderInvoices() {
+    const tbody = document.getElementById('invoicesTable');
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+
+    let filtered = invoices.filter(i => {
+      const matchSearch = !search ||
+        i.invoiceNumber?.toLowerCase().includes(search) ||
+        i.customerName?.toLowerCase().includes(search);
+      const matchStatus = !statusFilter || i.status === statusFilter;
+      return matchSearch && matchStatus;
+    });
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center">No invoices found</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(i => `
+      <tr>
+        <td><strong>${i.invoiceNumber}</strong></td>
+        <td>${new Date(i.date).toLocaleDateString()}</td>
+        <td>${i.customerName}<br><small>${i.customerPhone || ''}</small></td>
+        <td>${i.petName || '-'} ${i.petSpecies ? '(' + i.petSpecies + ')' : ''}</td>
+        <td><strong>₱${i.totalAmount.toFixed(2)}</strong></td>
+        <td><span class="badge ${i.status === 'Paid' ? 'badge-success' : 'badge-warning'}">${i.status}</span></td>
+        <td>
+          <div class="action-buttons">
+            ${i.status === 'Unpaid' ? `<button class="btn btn-sm btn-success" onclick="openPaymentModal(${i.id}, ${i.totalAmount})"><i class="fas fa-money-bill"></i></button>` : ''}
+            <button class="btn btn-sm btn-danger" onclick="deleteInvoice(${i.id})"><i class="fas fa-trash"></i></button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function filterInvoices() {
+    renderInvoices();
+  }
+
+  function openInvoiceModal() {
+    document.getElementById('invoiceForm').reset();
+    document.getElementById('totalAmount').textContent = '0.00';
+    populateItemSelects();
+    document.getElementById('invoiceModal').classList.add('active');
+  }
+
+  function closeInvoiceModal() {
+    document.getElementById('invoiceModal').classList.remove('active');
+  }
+
+  async function handleInvoiceSubmit(e) {
+    e.preventDefault();
+
+    const itemRows = document.querySelectorAll('.item-row');
+    const invoiceItems = [];
+
+    itemRows.forEach(row => {
+      const itemId = row.querySelector('.item-select').value;
+      const qty = parseInt(row.querySelector('.item-qty').value);
+      const price = parseFloat(row.querySelector('.item-price').value);
+
+      if (itemId && qty && price) {
+        invoiceItems.push({ itemId, quantity: qty, priceEach: price });
+      }
+    });
+
+    if (invoiceItems.length === 0) {
+      alert('Please add at least one item');
+      return;
+    }
+
+    const data = {
+      customerName: document.getElementById('customerName').value,
+      customerPhone: document.getElementById('customerPhone').value,
+      customerAddress: document.getElementById('customerAddress').value,
+      petName: document.getElementById('petName').value,
+      petSpecies: document.getElementById('petSpecies').value,
+      notes: document.getElementById('notes').value,
+      items: invoiceItems,
+    };
+
+    try {
+      const response = await fetch('/api/walkin-invoices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        alert('Invoice created successfully!');
+        closeInvoiceModal();
+        loadInvoices();
+      } else {
+        alert(result.message || 'Failed to create invoice');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred');
+    }
+  }
+
+  function openPaymentModal(invoiceId, totalAmount) {
+    document.getElementById('paymentInvoiceId').value = invoiceId;
+    document.getElementById('paymentTotal').textContent = '₱' + totalAmount.toFixed(2);
+    document.getElementById('cashAmount').value = totalAmount;
+    document.getElementById('paymentModal').classList.add('active');
+  }
+
+  function closePaymentModal() {
+    document.getElementById('paymentModal').classList.remove('active');
+  }
+
+  function togglePaymentFields() {
+    const method = document.getElementById('paymentMethod').value;
+    document.getElementById('cashFields').style.display = (method === 'Cash' || method === 'Mixed') ? 'block' : 'none';
+    document.getElementById('gcashFields').style.display = (method === 'GCash' || method === 'Mixed') ? 'block' : 'none';
+  }
+
+  async function handlePaymentSubmit(e) {
+    e.preventDefault();
+
+    const invoiceId = document.getElementById('paymentInvoiceId').value;
+    const data = {
+      paymentMethod: document.getElementById('paymentMethod').value,
+      cashAmount: document.getElementById('cashAmount').value,
+      gcashAmount: document.getElementById('gcashAmount').value,
+      gcashReference: document.getElementById('gcashReference').value,
+    };
+
+    try {
+      const response = await fetch(`/api/walkin-invoices/${invoiceId}/pay`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        alert('Payment recorded successfully!');
+        closePaymentModal();
+        loadInvoices();
+      } else {
+        alert(result.message || 'Failed to process payment');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred');
+    }
+  }
+
+  async function deleteInvoice(id) {
+    if (!confirm('Delete this invoice?')) return;
+
+    try {
+      const response = await fetch(`/api/walkin-invoices/${id}`, { method: 'DELETE' });
+      const result = await response.json();
+      if (result.success) {
+        loadInvoices();
+      } else {
+        alert(result.message || 'Failed to delete');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred');
+    }
+  }
+</script>

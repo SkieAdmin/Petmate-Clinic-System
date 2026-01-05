@@ -1,0 +1,382 @@
+<div class="page-header">
+  <h2><i class="fas fa-id-badge"></i> Employees</h2>
+  <p>Manage employee records and HR information</p>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">Total Employees</div>
+    <div class="stat-value" id="totalEmployees">0</div>
+  </div>
+  <div class="stat-card success">
+    <div class="stat-label">Active</div>
+    <div class="stat-value" id="activeEmployees">0</div>
+  </div>
+  <div class="stat-card warning">
+    <div class="stat-label">On Leave</div>
+    <div class="stat-value" id="onLeaveEmployees">0</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="search-bar" style="margin: 0; flex: 1;">
+      <input type="text" id="searchInput" placeholder="Search employees..." class="form-control">
+      <select id="statusFilter" class="form-control" style="max-width: 150px;">
+        <option value="">All Status</option>
+        <option value="Active">Active</option>
+        <option value="On Leave">On Leave</option>
+        <option value="Terminated">Terminated</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="openEmployeeModal()">
+      <i class="fas fa-plus"></i> Add Employee
+    </button>
+  </div>
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Employee ID</th>
+          <th>Name</th>
+          <th>Position</th>
+          <th>Department</th>
+          <th>Date Hired</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="employeesTable">
+        <tr><td colspan="7" class="text-center"><div class="spinner"></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Employee Modal -->
+<div class="modal-overlay" id="employeeModal">
+  <div class="modal" style="max-width: 700px;">
+    <div class="modal-header">
+      <h3 id="employeeModalTitle">Add Employee</h3>
+      <button class="modal-close" onclick="closeEmployeeModal()">&times;</button>
+    </div>
+    <form id="employeeForm">
+      <input type="hidden" id="employeeId">
+
+      <div class="form-group">
+        <label class="form-label">Link to User Account *</label>
+        <select id="userId" class="form-control" required>
+          <option value="">Select User</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Position *</label>
+          <input type="text" id="position" class="form-control" required placeholder="e.g., Veterinarian">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Department</label>
+          <select id="department" class="form-control">
+            <option value="">Select Department</option>
+            <option value="Administration">Administration</option>
+            <option value="Medical">Medical</option>
+            <option value="Front Desk">Front Desk</option>
+            <option value="Laboratory">Laboratory</option>
+            <option value="Grooming">Grooming</option>
+            <option value="Maintenance">Maintenance</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Date Hired</label>
+          <input type="date" id="dateHired" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select id="status" class="form-control">
+            <option value="Active">Active</option>
+            <option value="On Leave">On Leave</option>
+            <option value="Terminated">Terminated</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Salary</label>
+          <input type="number" id="salary" class="form-control" step="0.01" placeholder="0.00">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Salary Type</label>
+          <select id="salaryType" class="form-control">
+            <option value="Monthly">Monthly</option>
+            <option value="Daily">Daily</option>
+            <option value="Hourly">Hourly</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">SSS Number</label>
+          <input type="text" id="sssNumber" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">PhilHealth Number</label>
+          <input type="text" id="philhealthNumber" class="form-control">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Pag-IBIG Number</label>
+          <input type="text" id="pagibigNumber" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">TIN Number</label>
+          <input type="text" id="tinNumber" class="form-control">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Emergency Contact</label>
+          <input type="text" id="emergencyContact" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Emergency Phone</label>
+          <input type="text" id="emergencyPhone" class="form-control">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea id="notes" class="form-control textarea" rows="2"></textarea>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeEmployeeModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  let employees = [];
+  let users = [];
+
+  document.addEventListener('DOMContentLoaded', function() {
+    loadUsers();
+    loadStats();
+    loadEmployees();
+    document.getElementById('employeeForm').addEventListener('submit', handleSubmit);
+    document.getElementById('searchInput').addEventListener('input', filterEmployees);
+    document.getElementById('statusFilter').addEventListener('change', filterEmployees);
+  });
+
+  async function loadStats() {
+    try {
+      const response = await fetch('/api/employees/stats');
+      const result = await response.json();
+      if (result.success) {
+        document.getElementById('totalEmployees').textContent = result.data.total;
+        document.getElementById('activeEmployees').textContent = result.data.active;
+        document.getElementById('onLeaveEmployees').textContent = result.data.onLeave;
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  }
+
+  async function loadUsers() {
+    try {
+      const response = await fetch('/api/auth/roles');
+      // For now, we'll need to get users from another endpoint
+      // This is a placeholder - you may need to create an endpoint to list users
+    } catch (error) {
+      console.error('Error loading users:', error);
+    }
+  }
+
+  async function loadEmployees() {
+    try {
+      const response = await fetch('/api/employees');
+      const result = await response.json();
+      if (result.success) {
+        employees = result.data;
+        renderEmployees();
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  }
+
+  function renderEmployees() {
+    const tbody = document.getElementById('employeesTable');
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+
+    let filtered = employees.filter(e => {
+      const matchSearch = !search ||
+        e.employeeNumber?.toLowerCase().includes(search) ||
+        e.user?.fullName?.toLowerCase().includes(search) ||
+        e.position?.toLowerCase().includes(search);
+      const matchStatus = !statusFilter || e.status === statusFilter;
+      return matchSearch && matchStatus;
+    });
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center">No employees found</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(e => `
+      <tr>
+        <td><strong>${e.employeeNumber}</strong></td>
+        <td>${e.user?.fullName || '-'}<br><small>${e.user?.email || ''}</small></td>
+        <td>${e.position}</td>
+        <td>${e.department || '-'}</td>
+        <td>${new Date(e.dateHired).toLocaleDateString()}</td>
+        <td><span class="badge ${e.status === 'Active' ? 'badge-success' : e.status === 'On Leave' ? 'badge-warning' : 'badge-danger'}">${e.status}</span></td>
+        <td>
+          <div class="action-buttons">
+            <button class="btn btn-sm btn-primary" onclick="editEmployee(${e.id})"><i class="fas fa-edit"></i></button>
+            ${e.status === 'Active' ? `<button class="btn btn-sm btn-warning" onclick="terminateEmployee(${e.id})"><i class="fas fa-user-times"></i></button>` : ''}
+            <button class="btn btn-sm btn-danger" onclick="deleteEmployee(${e.id})"><i class="fas fa-trash"></i></button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function filterEmployees() {
+    renderEmployees();
+  }
+
+  function openEmployeeModal() {
+    document.getElementById('employeeModalTitle').textContent = 'Add Employee';
+    document.getElementById('employeeForm').reset();
+    document.getElementById('employeeId').value = '';
+    document.getElementById('dateHired').value = new Date().toISOString().split('T')[0];
+    document.getElementById('employeeModal').classList.add('active');
+  }
+
+  function closeEmployeeModal() {
+    document.getElementById('employeeModal').classList.remove('active');
+  }
+
+  function editEmployee(id) {
+    const employee = employees.find(e => e.id === id);
+    if (!employee) return;
+
+    document.getElementById('employeeModalTitle').textContent = 'Edit Employee';
+    document.getElementById('employeeId').value = id;
+    document.getElementById('userId').value = employee.userId;
+    document.getElementById('position').value = employee.position;
+    document.getElementById('department').value = employee.department || '';
+    document.getElementById('dateHired').value = employee.dateHired?.split('T')[0] || '';
+    document.getElementById('status').value = employee.status;
+    document.getElementById('salary').value = employee.salary || '';
+    document.getElementById('salaryType').value = employee.salaryType;
+    document.getElementById('sssNumber').value = employee.sssNumber || '';
+    document.getElementById('philhealthNumber').value = employee.philhealthNumber || '';
+    document.getElementById('pagibigNumber').value = employee.pagibigNumber || '';
+    document.getElementById('tinNumber').value = employee.tinNumber || '';
+    document.getElementById('emergencyContact').value = employee.emergencyContact || '';
+    document.getElementById('emergencyPhone').value = employee.emergencyPhone || '';
+    document.getElementById('notes').value = employee.notes || '';
+
+    document.getElementById('employeeModal').classList.add('active');
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+
+    const id = document.getElementById('employeeId').value;
+    const data = {
+      userId: document.getElementById('userId').value,
+      position: document.getElementById('position').value,
+      department: document.getElementById('department').value,
+      dateHired: document.getElementById('dateHired').value,
+      status: document.getElementById('status').value,
+      salary: document.getElementById('salary').value,
+      salaryType: document.getElementById('salaryType').value,
+      sssNumber: document.getElementById('sssNumber').value,
+      philhealthNumber: document.getElementById('philhealthNumber').value,
+      pagibigNumber: document.getElementById('pagibigNumber').value,
+      tinNumber: document.getElementById('tinNumber').value,
+      emergencyContact: document.getElementById('emergencyContact').value,
+      emergencyPhone: document.getElementById('emergencyPhone').value,
+      notes: document.getElementById('notes').value,
+    };
+
+    try {
+      const url = id ? `/api/employees/${id}` : '/api/employees';
+      const method = id ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        alert(result.message);
+        closeEmployeeModal();
+        loadStats();
+        loadEmployees();
+      } else {
+        alert(result.message || 'Failed to save');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred');
+    }
+  }
+
+  async function terminateEmployee(id) {
+    if (!confirm('Terminate this employee?')) return;
+
+    try {
+      const response = await fetch(`/api/employees/${id}/terminate`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        loadStats();
+        loadEmployees();
+      } else {
+        alert(result.message || 'Failed');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred');
+    }
+  }
+
+  async function deleteEmployee(id) {
+    if (!confirm('Delete this employee record?')) return;
+
+    try {
+      const response = await fetch(`/api/employees/${id}`, { method: 'DELETE' });
+      const result = await response.json();
+      if (result.success) {
+        loadStats();
+        loadEmployees();
+      } else {
+        alert(result.message || 'Failed to delete');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred');
+    }
+  }
+</script>

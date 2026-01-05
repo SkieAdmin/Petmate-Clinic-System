@@ -1,0 +1,537 @@
+<div class="page-header">
+  <h2><i class="fas fa-notes-medical"></i> <span id="pageTitle">New Consultation</span></h2>
+  <p id="pageSubtitle">Record diagnosis, treatment, and prescription</p>
+</div>
+
+<div class="consultation-form-container">
+  <div class="row">
+    <!-- Patient Info Sidebar -->
+    <div class="col-sidebar">
+      <div class="card patient-info-card">
+        <div class="card-header">
+          <h3 class="card-title"><i class="fas fa-paw"></i> Patient Information</h3>
+        </div>
+        <div id="patientInfo">
+          <div class="patient-avatar">
+            <i class="fas fa-dog"></i>
+          </div>
+          <div class="info-row">
+            <label>Patient Name</label>
+            <p id="patientName">-</p>
+          </div>
+          <div class="info-row">
+            <label>Species / Breed</label>
+            <p id="patientBreed">-</p>
+          </div>
+          <div class="info-row">
+            <label>Age / Gender</label>
+            <p id="patientAgeGender">-</p>
+          </div>
+          <div class="info-row">
+            <label>Owner</label>
+            <p id="ownerName">-</p>
+          </div>
+          <div class="info-row">
+            <label>Contact</label>
+            <p id="ownerContact">-</p>
+          </div>
+          <hr>
+          <div class="info-row">
+            <label>Previous Visits</label>
+            <p id="visitCount">0</p>
+          </div>
+          <div class="info-row">
+            <label>Last Visit</label>
+            <p id="lastVisit">-</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Previous Consultations -->
+      <div class="card mt-3">
+        <div class="card-header">
+          <h3 class="card-title"><i class="fas fa-history"></i> History</h3>
+        </div>
+        <div id="consultationHistory" class="consultation-history">
+          <p class="text-muted">No previous consultations</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Form -->
+    <div class="col-main">
+      <div class="card">
+        <form id="consultationForm">
+          <input type="hidden" id="consultationId">
+          <input type="hidden" id="patientId">
+          <input type="hidden" id="admissionId">
+
+          <!-- Select Patient (if new consultation) -->
+          <div class="form-group" id="patientSelectGroup">
+            <label class="form-label">Select Patient *</label>
+            <select id="patientSelect" class="form-control" required onchange="loadPatientInfo()">
+              <option value="">Search or select patient...</option>
+            </select>
+          </div>
+
+          <!-- Vital Signs -->
+          <div class="form-section">
+            <h4><i class="fas fa-heartbeat"></i> Vital Signs</h4>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Weight (kg)</label>
+                <input type="number" id="weight" class="form-control" step="0.01" placeholder="0.00">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Temperature (°C)</label>
+                <input type="number" id="temperature" class="form-control" step="0.1" placeholder="38.5">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Heart Rate (bpm)</label>
+                <input type="text" id="heartRate" class="form-control" placeholder="80-120">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Other Vital Signs</label>
+              <textarea id="vitalSigns" class="form-control textarea" rows="2" placeholder="Respiratory rate, capillary refill time, etc."></textarea>
+            </div>
+          </div>
+
+          <!-- Diagnosis -->
+          <div class="form-section">
+            <h4><i class="fas fa-stethoscope"></i> Diagnosis (DX)</h4>
+            <div class="form-group">
+              <label class="form-label">Chief Complaint / Symptoms</label>
+              <textarea id="symptoms" class="form-control textarea" rows="2" placeholder="What brought the patient in today?"></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Diagnosis *</label>
+              <textarea id="diagnosis" class="form-control textarea" rows="3" required placeholder="Primary diagnosis and any differential diagnoses..."></textarea>
+            </div>
+          </div>
+
+          <!-- Treatment (TX) -->
+          <div class="form-section">
+            <h4><i class="fas fa-syringe"></i> Treatment (TX)</h4>
+            <div class="form-group">
+              <label class="form-label">Treatment Plan</label>
+              <textarea id="treatment" class="form-control textarea" rows="4" placeholder="Procedures performed, injections given, wound care, etc."></textarea>
+            </div>
+          </div>
+
+          <!-- Prescription (RX) -->
+          <div class="form-section">
+            <h4><i class="fas fa-prescription"></i> Prescription (RX)</h4>
+            <div class="form-group">
+              <label class="form-label">Medications & Instructions</label>
+              <textarea id="prescription" class="form-control textarea" rows="4" placeholder="Medication name, dosage, frequency, duration...&#10;e.g., Amoxicillin 250mg - 1 tablet twice daily for 7 days"></textarea>
+            </div>
+          </div>
+
+          <!-- Additional Notes -->
+          <div class="form-section">
+            <h4><i class="fas fa-clipboard"></i> Additional Notes</h4>
+            <div class="form-group">
+              <label class="form-label">Notes</label>
+              <textarea id="notes" class="form-control textarea" rows="2" placeholder="Any other observations or notes..."></textarea>
+            </div>
+          </div>
+
+          <!-- Follow-up -->
+          <div class="form-section">
+            <h4><i class="fas fa-calendar-check"></i> Follow-up</h4>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Next Check-up Date</label>
+                <input type="date" id="nextCheckUpDate" class="form-control">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Consultation Status</label>
+                <select id="status" class="form-control">
+                  <option value="Ongoing">Ongoing</option>
+                  <option value="For Follow-up">For Follow-up</option>
+                  <option value="Completed">Completed</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" onclick="goBack()">Cancel</button>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Consultation</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .consultation-form-container {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .row {
+    display: flex;
+    gap: 1.5rem;
+  }
+
+  .col-sidebar {
+    width: 300px;
+    flex-shrink: 0;
+  }
+
+  .col-main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .patient-info-card .patient-avatar {
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+
+  .patient-avatar i {
+    font-size: 4rem;
+    color: var(--primary-color);
+    background: var(--bg-light);
+    padding: 1rem;
+    border-radius: 50%;
+  }
+
+  .info-row {
+    margin-bottom: 0.75rem;
+  }
+
+  .info-row label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+
+  .info-row p {
+    margin: 0;
+    font-weight: 500;
+  }
+
+  .form-section {
+    background: var(--bg-light);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+  }
+
+  .form-section h4 {
+    margin: 0 0 1rem 0;
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .consultation-history {
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .history-item {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+  }
+
+  .history-item:hover {
+    background: var(--bg-light);
+  }
+
+  .history-item:last-child {
+    border-bottom: none;
+  }
+
+  .history-date {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  .history-diagnosis {
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+  }
+
+  @media (max-width: 992px) {
+    .row {
+      flex-direction: column;
+    }
+
+    .col-sidebar {
+      width: 100%;
+    }
+  }
+</style>
+
+<script>
+  let patients = [];
+  let currentPatient = null;
+
+  document.addEventListener('DOMContentLoaded', function() {
+    loadPatients();
+    document.getElementById('consultationForm').addEventListener('submit', handleSubmit);
+
+    // Check for URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const patientId = urlParams.get('patientId');
+    const consultationId = urlParams.get('id');
+    const admissionId = urlParams.get('admissionId');
+
+    if (consultationId) {
+      loadConsultation(consultationId);
+    } else if (patientId) {
+      document.getElementById('patientId').value = patientId;
+      setTimeout(() => {
+        document.getElementById('patientSelect').value = patientId;
+        loadPatientInfo();
+      }, 500);
+    }
+
+    if (admissionId) {
+      document.getElementById('admissionId').value = admissionId;
+    }
+  });
+
+  async function loadPatients() {
+    try {
+      const response = await fetch('/api/patients');
+      const result = await response.json();
+      if (result.success) {
+        patients = result.data;
+        populatePatientSelect();
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  }
+
+  function populatePatientSelect() {
+    const select = document.getElementById('patientSelect');
+    select.innerHTML = '<option value="">Search or select patient...</option>';
+    patients.forEach(p => {
+      const owner = p.client?.name || 'No owner';
+      select.innerHTML += `<option value="${p.id}">${p.name} (${p.species}) - ${owner}</option>`;
+    });
+
+    // Set value if patientId was pre-set
+    const patientId = document.getElementById('patientId').value;
+    if (patientId) {
+      select.value = patientId;
+    }
+  }
+
+  async function loadPatientInfo() {
+    const patientId = document.getElementById('patientSelect').value;
+    if (!patientId) {
+      resetPatientInfo();
+      return;
+    }
+
+    document.getElementById('patientId').value = patientId;
+
+    try {
+      const response = await fetch(`/api/patients/${patientId}`);
+      const result = await response.json();
+      if (result.success) {
+        currentPatient = result.data;
+        displayPatientInfo(currentPatient);
+        loadPatientHistory(patientId);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  }
+
+  function displayPatientInfo(patient) {
+    document.getElementById('patientName').textContent = patient.name || '-';
+    document.getElementById('patientBreed').textContent =
+      `${patient.species || '-'} / ${patient.breed || 'Unknown breed'}`;
+
+    let age = '-';
+    if (patient.birthDate) {
+      const birth = new Date(patient.birthDate);
+      const now = new Date();
+      const years = Math.floor((now - birth) / (365.25 * 24 * 60 * 60 * 1000));
+      const months = Math.floor(((now - birth) % (365.25 * 24 * 60 * 60 * 1000)) / (30.44 * 24 * 60 * 60 * 1000));
+      age = years > 0 ? `${years}y ${months}m` : `${months}m`;
+    }
+    document.getElementById('patientAgeGender').textContent = `${age} / ${patient.gender || '-'}`;
+
+    document.getElementById('ownerName').textContent = patient.client?.name || '-';
+    document.getElementById('ownerContact').textContent = patient.client?.phone || patient.client?.email || '-';
+
+    // Update avatar based on species
+    const avatar = document.querySelector('.patient-avatar i');
+    switch(patient.species?.toLowerCase()) {
+      case 'cat': avatar.className = 'fas fa-cat'; break;
+      case 'bird': avatar.className = 'fas fa-dove'; break;
+      default: avatar.className = 'fas fa-dog';
+    }
+  }
+
+  function resetPatientInfo() {
+    document.getElementById('patientName').textContent = '-';
+    document.getElementById('patientBreed').textContent = '-';
+    document.getElementById('patientAgeGender').textContent = '-';
+    document.getElementById('ownerName').textContent = '-';
+    document.getElementById('ownerContact').textContent = '-';
+    document.getElementById('visitCount').textContent = '0';
+    document.getElementById('lastVisit').textContent = '-';
+    document.getElementById('consultationHistory').innerHTML = '<p class="text-muted">No previous consultations</p>';
+    currentPatient = null;
+  }
+
+  async function loadPatientHistory(patientId) {
+    try {
+      const response = await fetch(`/api/consultations?patientId=${patientId}`);
+      const result = await response.json();
+      if (result.success) {
+        const consultations = result.data;
+        document.getElementById('visitCount').textContent = consultations.length;
+
+        if (consultations.length > 0) {
+          const lastDate = new Date(consultations[0].consultationDate);
+          document.getElementById('lastVisit').textContent = lastDate.toLocaleDateString();
+
+          renderHistory(consultations);
+        } else {
+          document.getElementById('lastVisit').textContent = '-';
+          document.getElementById('consultationHistory').innerHTML = '<p class="text-muted">No previous consultations</p>';
+        }
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  }
+
+  function renderHistory(consultations) {
+    const container = document.getElementById('consultationHistory');
+    container.innerHTML = consultations.slice(0, 10).map(c => `
+      <div class="history-item" onclick="viewConsultation(${c.id})">
+        <div class="history-date">${new Date(c.consultationDate).toLocaleDateString()}</div>
+        <div class="history-diagnosis">${c.diagnosis?.substring(0, 50) || 'No diagnosis'}${c.diagnosis?.length > 50 ? '...' : ''}</div>
+        <span class="badge ${getStatusBadge(c.status)}">${c.status}</span>
+      </div>
+    `).join('');
+  }
+
+  function getStatusBadge(status) {
+    switch(status) {
+      case 'Completed': return 'badge-success';
+      case 'For Follow-up': return 'badge-warning';
+      case 'Ongoing': return 'badge-info';
+      default: return 'badge-secondary';
+    }
+  }
+
+  async function loadConsultation(id) {
+    try {
+      const response = await fetch(`/api/consultations/${id}`);
+      const result = await response.json();
+      if (result.success) {
+        const c = result.data;
+        document.getElementById('pageTitle').textContent = 'Edit Consultation';
+        document.getElementById('pageSubtitle').textContent = `Editing consultation from ${new Date(c.consultationDate).toLocaleDateString()}`;
+
+        document.getElementById('consultationId').value = c.id;
+        document.getElementById('patientId').value = c.patientId;
+        document.getElementById('patientSelect').value = c.patientId;
+        document.getElementById('patientSelectGroup').style.display = 'none';
+
+        document.getElementById('weight').value = c.weight || '';
+        document.getElementById('temperature').value = c.temperature || '';
+        document.getElementById('vitalSigns').value = c.vitalSigns || '';
+        document.getElementById('diagnosis').value = c.diagnosis || '';
+        document.getElementById('treatment').value = c.treatment || '';
+        document.getElementById('prescription').value = c.prescription || '';
+        document.getElementById('notes').value = c.notes || '';
+        document.getElementById('nextCheckUpDate').value = c.nextCheckUpDate?.split('T')[0] || '';
+        document.getElementById('status').value = c.status || 'Ongoing';
+
+        if (c.admissionId) {
+          document.getElementById('admissionId').value = c.admissionId;
+        }
+
+        loadPatientInfo();
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  }
+
+  function viewConsultation(id) {
+    window.location.href = `/consultation-detail?id=${id}`;
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+
+    const consultationId = document.getElementById('consultationId').value;
+    const patientId = document.getElementById('patientId').value;
+
+    if (!patientId) {
+      alert('Please select a patient');
+      return;
+    }
+
+    const data = {
+      patientId: parseInt(patientId),
+      weight: document.getElementById('weight').value ? parseFloat(document.getElementById('weight').value) : null,
+      temperature: document.getElementById('temperature').value ? parseFloat(document.getElementById('temperature').value) : null,
+      vitalSigns: document.getElementById('vitalSigns').value,
+      diagnosis: document.getElementById('diagnosis').value,
+      treatment: document.getElementById('treatment').value,
+      prescription: document.getElementById('prescription').value,
+      notes: document.getElementById('notes').value,
+      nextCheckUpDate: document.getElementById('nextCheckUpDate').value || null,
+      status: document.getElementById('status').value,
+    };
+
+    const admissionId = document.getElementById('admissionId').value;
+    if (admissionId) {
+      data.admissionId = parseInt(admissionId);
+    }
+
+    try {
+      const url = consultationId ? `/api/consultations/${consultationId}` : '/api/consultations';
+      const method = consultationId ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        alert('Consultation saved successfully!');
+        window.location.href = '/consultations';
+      } else {
+        alert(result.message || 'Failed to save consultation');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred');
+    }
+  }
+
+  function goBack() {
+    window.history.back();
+  }
+</script>

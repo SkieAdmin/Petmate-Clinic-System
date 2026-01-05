@@ -1,0 +1,619 @@
+<div class="page-header">
+  <h2><i class="fas fa-file-invoice"></i> Purchase Orders</h2>
+  <p>Manage inventory purchase orders</p>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">Pending Orders</div>
+    <div class="stat-value" id="pendingCount">0</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Approved</div>
+    <div class="stat-value" id="approvedCount">0</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Received</div>
+    <div class="stat-value" id="receivedCount">0</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="filter-bar" style="margin: 0; flex: 1;">
+      <input type="text" id="searchInput" placeholder="Search PO..." class="form-control" style="max-width: 200px;" onkeyup="filterOrders()">
+      <select id="statusFilter" class="form-control" style="max-width: 150px;" onchange="filterOrders()">
+        <option value="">All Status</option>
+        <option value="Pending">Pending</option>
+        <option value="Approved">Approved</option>
+        <option value="Partially Received">Partially Received</option>
+        <option value="Received">Received</option>
+        <option value="Cancelled">Cancelled</option>
+      </select>
+      <select id="supplierFilter" class="form-control" style="max-width: 200px;" onchange="filterOrders()">
+        <option value="">All Suppliers</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="openPOModal()">
+      <i class="fas fa-plus"></i> New Purchase Order
+    </button>
+  </div>
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>PO Number</th>
+          <th>Date</th>
+          <th>Supplier</th>
+          <th>Items</th>
+          <th>Total</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="ordersTable">
+        <tr><td colspan="7" class="text-center"><div class="spinner"></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Purchase Order Modal -->
+<div class="modal-overlay" id="poModal">
+  <div class="modal" style="max-width: 900px;">
+    <div class="modal-header">
+      <h3 id="poModalTitle">New Purchase Order</h3>
+      <button class="modal-close" onclick="closePOModal()">&times;</button>
+    </div>
+    <form id="poForm">
+      <input type="hidden" id="poId">
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Supplier *</label>
+          <select id="supplierId" class="form-control" required onchange="loadSupplierItems()">
+            <option value="">Select Supplier</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Order Date *</label>
+          <input type="date" id="orderDate" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Expected Delivery</label>
+          <input type="date" id="expectedDelivery" class="form-control">
+        </div>
+      </div>
+
+      <h4>Order Items</h4>
+      <div id="itemsContainer">
+        <div class="form-row item-row">
+          <div class="form-group" style="flex: 3;">
+            <select class="form-control po-item-select" onchange="updateItemDetails(this)">
+              <option value="">Select Item</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <input type="number" class="form-control po-item-qty" placeholder="Qty" min="1" value="1" onchange="calculatePOTotal()">
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <input type="number" class="form-control po-item-price" placeholder="Unit Price" step="0.01" onchange="calculatePOTotal()">
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <input type="text" class="form-control po-item-subtotal" placeholder="Subtotal" readonly>
+          </div>
+          <div class="form-group" style="flex: 0.5;">
+            <button type="button" class="btn btn-danger btn-sm" onclick="removePOItem(this)"><i class="fas fa-times"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <button type="button" class="btn btn-secondary btn-sm" onclick="addPOItem()">
+        <i class="fas fa-plus"></i> Add Item
+      </button>
+
+      <div class="mt-3">
+        <h3>Total: ₱<span id="poTotal">0.00</span></h3>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea id="notes" class="form-control textarea" rows="2"></textarea>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closePOModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- View PO Modal -->
+<div class="modal-overlay" id="viewPOModal">
+  <div class="modal" style="max-width: 800px;">
+    <div class="modal-header">
+      <h3>Purchase Order Details</h3>
+      <button class="modal-close" onclick="closeViewPOModal()">&times;</button>
+    </div>
+    <div id="viewPOContent">
+      <!-- Content loaded dynamically -->
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeViewPOModal()">Close</button>
+      <button type="button" class="btn btn-success" id="approvePOBtn" onclick="approvePO()"><i class="fas fa-check"></i> Approve</button>
+      <button type="button" class="btn btn-primary" id="receivePOBtn" onclick="createReceivingReport()"><i class="fas fa-truck"></i> Receive Items</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let orders = [];
+  let suppliers = [];
+  let items = [];
+  let supplierItems = [];
+  let currentPO = null;
+
+  document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('orderDate').value = new Date().toISOString().split('T')[0];
+    loadSuppliers();
+    loadItems();
+    loadOrders();
+    document.getElementById('poForm').addEventListener('submit', handleSubmit);
+  });
+
+  async function loadSuppliers() {
+    try {
+      const response = await fetch('/api/suppliers');
+      const result = await response.json();
+      if (result.success) {
+        suppliers = result.data;
+        populateSupplierSelects();
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  }
+
+  function populateSupplierSelects() {
+    const supplierSelect = document.getElementById('supplierId');
+    const filterSelect = document.getElementById('supplierFilter');
+
+    supplierSelect.innerHTML = '<option value="">Select Supplier</option>';
+    filterSelect.innerHTML = '<option value="">All Suppliers</option>';
+
+    suppliers.forEach(s => {
+      supplierSelect.innerHTML += `<option value="${s.id}">${s.name}</option>`;
+      filterSelect.innerHTML += `<option value="${s.id}">${s.name}</option>`;
+    });
+  }
+
+  async function loadItems() {
+    try {
+      const response = await fetch('/api/items');
+      const result = await response.json();
+      if (result.success) {
+        items = result.data;
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  }
+
+  function loadSupplierItems() {
+    const supplierId = document.getElementById('supplierId').value;
+    if (!supplierId) {
+      supplierItems = [];
+      populateItemSelects();
+      return;
+    }
+
+    // Find supplier and their items
+    const supplier = suppliers.find(s => s.id == supplierId);
+    if (supplier && supplier.itemPrices) {
+      supplierItems = supplier.itemPrices.map(ip => ({
+        ...ip.item,
+        supplierPrice: ip.price
+      }));
+    } else {
+      supplierItems = items; // Fall back to all items
+    }
+    populateItemSelects();
+  }
+
+  function populateItemSelects() {
+    document.querySelectorAll('.po-item-select').forEach(select => {
+      const currentValue = select.value;
+      select.innerHTML = '<option value="">Select Item</option>';
+      const itemList = supplierItems.length > 0 ? supplierItems : items;
+      itemList.forEach(item => {
+        const price = item.supplierPrice || item.price || 0;
+        select.innerHTML += `<option value="${item.id}" data-price="${price}">${item.name} (₱${price.toFixed(2)})</option>`;
+      });
+      select.value = currentValue;
+    });
+  }
+
+  function updateItemDetails(select) {
+    const row = select.closest('.item-row');
+    const priceInput = row.querySelector('.po-item-price');
+    const selectedOption = select.options[select.selectedIndex];
+    if (selectedOption && selectedOption.dataset.price) {
+      priceInput.value = selectedOption.dataset.price;
+    }
+    calculatePOTotal();
+  }
+
+  function calculatePOTotal() {
+    let total = 0;
+    document.querySelectorAll('.item-row').forEach(row => {
+      const qty = parseFloat(row.querySelector('.po-item-qty').value) || 0;
+      const price = parseFloat(row.querySelector('.po-item-price').value) || 0;
+      const subtotal = qty * price;
+      row.querySelector('.po-item-subtotal').value = '₱' + subtotal.toFixed(2);
+      total += subtotal;
+    });
+    document.getElementById('poTotal').textContent = total.toFixed(2);
+  }
+
+  function addPOItem() {
+    const container = document.getElementById('itemsContainer');
+    const row = document.createElement('div');
+    row.className = 'form-row item-row';
+    row.innerHTML = `
+      <div class="form-group" style="flex: 3;">
+        <select class="form-control po-item-select" onchange="updateItemDetails(this)">
+          <option value="">Select Item</option>
+        </select>
+      </div>
+      <div class="form-group" style="flex: 1;">
+        <input type="number" class="form-control po-item-qty" placeholder="Qty" min="1" value="1" onchange="calculatePOTotal()">
+      </div>
+      <div class="form-group" style="flex: 1;">
+        <input type="number" class="form-control po-item-price" placeholder="Unit Price" step="0.01" onchange="calculatePOTotal()">
+      </div>
+      <div class="form-group" style="flex: 1;">
+        <input type="text" class="form-control po-item-subtotal" placeholder="Subtotal" readonly>
+      </div>
+      <div class="form-group" style="flex: 0.5;">
+        <button type="button" class="btn btn-danger btn-sm" onclick="removePOItem(this)"><i class="fas fa-times"></i></button>
+      </div>
+    `;
+    container.appendChild(row);
+    populateItemSelects();
+  }
+
+  function removePOItem(btn) {
+    const rows = document.querySelectorAll('.item-row');
+    if (rows.length > 1) {
+      btn.closest('.item-row').remove();
+      calculatePOTotal();
+    }
+  }
+
+  async function loadOrders() {
+    try {
+      const response = await fetch('/api/purchase-orders');
+      const result = await response.json();
+      if (result.success) {
+        orders = result.data;
+        renderOrders();
+        updateStats();
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  }
+
+  function updateStats() {
+    document.getElementById('pendingCount').textContent = orders.filter(o => o.status === 'Pending').length;
+    document.getElementById('approvedCount').textContent = orders.filter(o => o.status === 'Approved').length;
+    document.getElementById('receivedCount').textContent = orders.filter(o => o.status === 'Received').length;
+  }
+
+  function renderOrders() {
+    const tbody = document.getElementById('ordersTable');
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+    const supplierFilter = document.getElementById('supplierFilter').value;
+
+    let filtered = orders.filter(o => {
+      const matchSearch = !search || o.poNumber?.toLowerCase().includes(search) || o.supplier?.name?.toLowerCase().includes(search);
+      const matchStatus = !statusFilter || o.status === statusFilter;
+      const matchSupplier = !supplierFilter || o.supplierId == supplierFilter;
+      return matchSearch && matchStatus && matchSupplier;
+    });
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center">No purchase orders found</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(o => `
+      <tr>
+        <td><strong>${o.poNumber}</strong></td>
+        <td>${new Date(o.orderDate).toLocaleDateString()}</td>
+        <td>${o.supplier?.name || '-'}</td>
+        <td>${o.items?.length || 0} items</td>
+        <td><strong>₱${o.totalAmount?.toFixed(2) || '0.00'}</strong></td>
+        <td><span class="badge ${getStatusBadge(o.status)}">${o.status}</span></td>
+        <td>
+          <div class="action-buttons">
+            <button class="btn btn-sm btn-info" onclick="viewPO(${o.id})"><i class="fas fa-eye"></i></button>
+            ${o.status === 'Pending' ? `<button class="btn btn-sm btn-primary" onclick="editPO(${o.id})"><i class="fas fa-edit"></i></button>` : ''}
+            ${o.status === 'Pending' ? `<button class="btn btn-sm btn-danger" onclick="deletePO(${o.id})"><i class="fas fa-trash"></i></button>` : ''}
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function getStatusBadge(status) {
+    switch(status) {
+      case 'Pending': return 'badge-warning';
+      case 'Approved': return 'badge-info';
+      case 'Partially Received': return 'badge-secondary';
+      case 'Received': return 'badge-success';
+      case 'Cancelled': return 'badge-danger';
+      default: return 'badge-secondary';
+    }
+  }
+
+  function filterOrders() {
+    renderOrders();
+  }
+
+  function openPOModal() {
+    document.getElementById('poModalTitle').textContent = 'New Purchase Order';
+    document.getElementById('poForm').reset();
+    document.getElementById('poId').value = '';
+    document.getElementById('orderDate').value = new Date().toISOString().split('T')[0];
+    document.getElementById('poTotal').textContent = '0.00';
+    supplierItems = [];
+    populateItemSelects();
+    document.getElementById('poModal').classList.add('active');
+  }
+
+  function closePOModal() {
+    document.getElementById('poModal').classList.remove('active');
+  }
+
+  async function viewPO(id) {
+    try {
+      const response = await fetch(`/api/purchase-orders/${id}`);
+      const result = await response.json();
+      if (result.success) {
+        currentPO = result.data;
+        renderPODetails(currentPO);
+        document.getElementById('approvePOBtn').style.display = currentPO.status === 'Pending' ? 'inline-block' : 'none';
+        document.getElementById('receivePOBtn').style.display = (currentPO.status === 'Approved' || currentPO.status === 'Partially Received') ? 'inline-block' : 'none';
+        document.getElementById('viewPOModal').classList.add('active');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  }
+
+  function renderPODetails(po) {
+    const content = document.getElementById('viewPOContent');
+    content.innerHTML = `
+      <div class="po-details">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">PO Number</label>
+            <p><strong>${po.poNumber}</strong></p>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <p><span class="badge ${getStatusBadge(po.status)}">${po.status}</span></p>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Supplier</label>
+            <p>${po.supplier?.name || '-'}</p>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Order Date</label>
+            <p>${new Date(po.orderDate).toLocaleDateString()}</p>
+          </div>
+        </div>
+        <h4>Items</h4>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Quantity</th>
+              <th>Unit Price</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${po.items?.map(i => `
+              <tr>
+                <td>${i.item?.name || '-'}</td>
+                <td>${i.quantity}</td>
+                <td>₱${i.unitPrice?.toFixed(2) || '0.00'}</td>
+                <td>₱${((i.quantity || 0) * (i.unitPrice || 0)).toFixed(2)}</td>
+              </tr>
+            `).join('') || '<tr><td colspan="4">No items</td></tr>'}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3" class="text-right"><strong>Total:</strong></td>
+              <td><strong>₱${po.totalAmount?.toFixed(2) || '0.00'}</strong></td>
+            </tr>
+          </tfoot>
+        </table>
+        ${po.notes ? `<p><strong>Notes:</strong> ${po.notes}</p>` : ''}
+      </div>
+    `;
+  }
+
+  function closeViewPOModal() {
+    document.getElementById('viewPOModal').classList.remove('active');
+    currentPO = null;
+  }
+
+  async function editPO(id) {
+    try {
+      const response = await fetch(`/api/purchase-orders/${id}`);
+      const result = await response.json();
+      if (result.success) {
+        const po = result.data;
+        document.getElementById('poModalTitle').textContent = 'Edit Purchase Order';
+        document.getElementById('poId').value = po.id;
+        document.getElementById('supplierId').value = po.supplierId;
+        document.getElementById('orderDate').value = po.orderDate?.split('T')[0];
+        document.getElementById('expectedDelivery').value = po.expectedDelivery?.split('T')[0] || '';
+        document.getElementById('notes').value = po.notes || '';
+
+        // Load supplier items first
+        await loadSupplierItems();
+
+        // Clear and rebuild items
+        const container = document.getElementById('itemsContainer');
+        container.innerHTML = '';
+
+        po.items?.forEach((item, index) => {
+          const row = document.createElement('div');
+          row.className = 'form-row item-row';
+          row.innerHTML = `
+            <div class="form-group" style="flex: 3;">
+              <select class="form-control po-item-select" onchange="updateItemDetails(this)">
+                <option value="">Select Item</option>
+              </select>
+            </div>
+            <div class="form-group" style="flex: 1;">
+              <input type="number" class="form-control po-item-qty" placeholder="Qty" min="1" value="${item.quantity}" onchange="calculatePOTotal()">
+            </div>
+            <div class="form-group" style="flex: 1;">
+              <input type="number" class="form-control po-item-price" placeholder="Unit Price" step="0.01" value="${item.unitPrice}" onchange="calculatePOTotal()">
+            </div>
+            <div class="form-group" style="flex: 1;">
+              <input type="text" class="form-control po-item-subtotal" placeholder="Subtotal" readonly>
+            </div>
+            <div class="form-group" style="flex: 0.5;">
+              <button type="button" class="btn btn-danger btn-sm" onclick="removePOItem(this)"><i class="fas fa-times"></i></button>
+            </div>
+          `;
+          container.appendChild(row);
+        });
+
+        populateItemSelects();
+
+        // Set selected items
+        const selects = container.querySelectorAll('.po-item-select');
+        po.items?.forEach((item, index) => {
+          if (selects[index]) {
+            selects[index].value = item.itemId;
+          }
+        });
+
+        calculatePOTotal();
+        document.getElementById('poModal').classList.add('active');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+
+    const itemRows = document.querySelectorAll('.item-row');
+    const poItems = [];
+
+    itemRows.forEach(row => {
+      const itemId = row.querySelector('.po-item-select').value;
+      const qty = parseInt(row.querySelector('.po-item-qty').value);
+      const price = parseFloat(row.querySelector('.po-item-price').value);
+
+      if (itemId && qty && price) {
+        poItems.push({ itemId: parseInt(itemId), quantity: qty, unitPrice: price });
+      }
+    });
+
+    if (poItems.length === 0) {
+      alert('Please add at least one item');
+      return;
+    }
+
+    const id = document.getElementById('poId').value;
+    const data = {
+      supplierId: parseInt(document.getElementById('supplierId').value),
+      orderDate: document.getElementById('orderDate').value,
+      expectedDelivery: document.getElementById('expectedDelivery').value || null,
+      notes: document.getElementById('notes').value,
+      items: poItems,
+    };
+
+    try {
+      const url = id ? `/api/purchase-orders/${id}` : '/api/purchase-orders';
+      const method = id ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        alert(result.message || 'Purchase order saved successfully!');
+        closePOModal();
+        loadOrders();
+      } else {
+        alert(result.message || 'Failed to save');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred');
+    }
+  }
+
+  async function approvePO() {
+    if (!currentPO || !confirm('Approve this purchase order?')) return;
+
+    try {
+      const response = await fetch(`/api/purchase-orders/${currentPO.id}/approve`, {
+        method: 'PUT',
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        alert('Purchase order approved!');
+        closeViewPOModal();
+        loadOrders();
+      } else {
+        alert(result.message || 'Failed to approve');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred');
+    }
+  }
+
+  function createReceivingReport() {
+    if (!currentPO) return;
+    window.location.href = `/receiving-reports?poId=${currentPO.id}`;
+  }
+
+  async function deletePO(id) {
+    if (!confirm('Delete this purchase order?')) return;
+
+    try {
+      const response = await fetch(`/api/purchase-orders/${id}`, { method: 'DELETE' });
+      const result = await response.json();
+      if (result.success) {
+        loadOrders();
+      } else {
+        alert(result.message || 'Failed to delete');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred');
+    }
+  }
+</script>

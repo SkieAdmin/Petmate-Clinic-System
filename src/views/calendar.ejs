@@ -1,0 +1,233 @@
+<div class="page-header">
+  <h2><i class="fas fa-calendar"></i> Clinic Calendar</h2>
+  <p>View all appointments, consultations, and follow-up schedules</p>
+</div>
+
+<div class="calendar-container">
+  <div class="calendar-header">
+    <h3 id="currentMonth">January 2024</h3>
+    <div class="calendar-nav">
+      <button onclick="previousMonth()"><i class="fas fa-chevron-left"></i></button>
+      <button onclick="goToToday()">Today</button>
+      <button onclick="nextMonth()"><i class="fas fa-chevron-right"></i></button>
+    </div>
+  </div>
+
+  <div class="calendar-legend" style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+    <span><span class="calendar-event appointment" style="display: inline-block; width: 12px; height: 12px; border-radius: 2px;"></span> Appointments</span>
+    <span><span class="calendar-event consultation" style="display: inline-block; width: 12px; height: 12px; border-radius: 2px;"></span> Consultations</span>
+    <span><span class="calendar-event followup" style="display: inline-block; width: 12px; height: 12px; border-radius: 2px;"></span> Follow-ups</span>
+  </div>
+
+  <div class="calendar-grid" id="calendarGrid">
+    <!-- Calendar will be rendered here -->
+  </div>
+</div>
+
+<!-- Event Details Modal -->
+<div class="modal-overlay" id="eventModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="eventModalTitle">Events for Date</h3>
+      <button class="modal-close" onclick="closeEventModal()">&times;</button>
+    </div>
+    <div id="eventModalContent">
+      <!-- Event details will be rendered here -->
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentDate = new Date();
+  let calendarData = { appointments: [], consultations: [], followUps: [] };
+
+  document.addEventListener('DOMContentLoaded', function() {
+    renderCalendar();
+  });
+
+  async function loadCalendarData() {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const startDate = new Date(year, month, 1).toISOString();
+    const endDate = new Date(year, month + 1, 0).toISOString();
+
+    try {
+      const response = await fetch(`/api/system/calendar?startDate=${startDate}&endDate=${endDate}`);
+      const result = await response.json();
+      if (result.success) {
+        calendarData = result.data;
+      }
+    } catch (error) {
+      console.error('Error loading calendar data:', error);
+    }
+  }
+
+  async function renderCalendar() {
+    await loadCalendarData();
+
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+    document.getElementById('currentMonth').textContent = `${monthNames[month]} ${year}`;
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+    const today = new Date();
+    const isCurrentMonth = today.getMonth() === month && today.getFullYear() === year;
+
+    let html = `
+      <div class="calendar-day-header">Sun</div>
+      <div class="calendar-day-header">Mon</div>
+      <div class="calendar-day-header">Tue</div>
+      <div class="calendar-day-header">Wed</div>
+      <div class="calendar-day-header">Thu</div>
+      <div class="calendar-day-header">Fri</div>
+      <div class="calendar-day-header">Sat</div>
+    `;
+
+    // Previous month days
+    for (let i = firstDay - 1; i >= 0; i--) {
+      const day = daysInPrevMonth - i;
+      html += `<div class="calendar-day other-month"><div class="calendar-day-number">${day}</div></div>`;
+    }
+
+    // Current month days
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const isToday = isCurrentMonth && today.getDate() === day;
+      const events = getEventsForDate(dateStr);
+
+      html += `
+        <div class="calendar-day ${isToday ? 'today' : ''}" onclick="showDayEvents('${dateStr}')">
+          <div class="calendar-day-number">${day}</div>
+          ${events.appointments.slice(0, 2).map(e => `<div class="calendar-event appointment">${e.patient?.name || 'Appointment'}</div>`).join('')}
+          ${events.consultations.slice(0, 2).map(e => `<div class="calendar-event consultation">${e.patient?.name || 'Consultation'}</div>`).join('')}
+          ${events.followUps.slice(0, 2).map(e => `<div class="calendar-event followup">${e.patient?.name || 'Follow-up'}</div>`).join('')}
+          ${(events.appointments.length + events.consultations.length + events.followUps.length) > 6 ? '<div class="calendar-event" style="background: #ccc;">+more</div>' : ''}
+        </div>
+      `;
+    }
+
+    // Next month days
+    const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
+    const nextMonthDays = totalCells - firstDay - daysInMonth;
+    for (let day = 1; day <= nextMonthDays; day++) {
+      html += `<div class="calendar-day other-month"><div class="calendar-day-number">${day}</div></div>`;
+    }
+
+    document.getElementById('calendarGrid').innerHTML = html;
+  }
+
+  function getEventsForDate(dateStr) {
+    const events = {
+      appointments: [],
+      consultations: [],
+      followUps: []
+    };
+
+    calendarData.appointments?.forEach(a => {
+      if (a.dateTime?.startsWith(dateStr)) {
+        events.appointments.push(a);
+      }
+    });
+
+    calendarData.consultations?.forEach(c => {
+      if (c.consultationDate?.startsWith(dateStr)) {
+        events.consultations.push(c);
+      }
+    });
+
+    calendarData.followUps?.forEach(f => {
+      if (f.nextCheckUpDate?.startsWith(dateStr)) {
+        events.followUps.push(f);
+      }
+    });
+
+    return events;
+  }
+
+  function showDayEvents(dateStr) {
+    const events = getEventsForDate(dateStr);
+    const date = new Date(dateStr);
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+
+    document.getElementById('eventModalTitle').textContent = date.toLocaleDateString('en-US', options);
+
+    let html = '';
+
+    if (events.appointments.length === 0 && events.consultations.length === 0 && events.followUps.length === 0) {
+      html = '<div class="empty-state"><i class="fas fa-calendar-day"></i><h3>No events</h3><p>No scheduled events for this day</p></div>';
+    } else {
+      if (events.appointments.length > 0) {
+        html += '<h4 style="margin: 1rem 0 0.5rem; color: var(--light-green);"><i class="fas fa-calendar-check"></i> Appointments</h4>';
+        events.appointments.forEach(a => {
+          html += `
+            <div class="schedule-item" style="border-left-color: var(--light-green);">
+              <div class="schedule-time">${new Date(a.dateTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+              <div class="schedule-details">
+                <h4>${a.patient?.name || 'Unknown'}</h4>
+                <p>Owner: ${a.patient?.client?.name || 'Unknown'} | Status: ${a.status}</p>
+                ${a.reason ? `<p>${a.reason}</p>` : ''}
+              </div>
+            </div>
+          `;
+        });
+      }
+
+      if (events.consultations.length > 0) {
+        html += '<h4 style="margin: 1rem 0 0.5rem; color: var(--primary-green);"><i class="fas fa-stethoscope"></i> Consultations</h4>';
+        events.consultations.forEach(c => {
+          html += `
+            <div class="schedule-item" style="border-left-color: var(--primary-green);">
+              <div class="schedule-time">${new Date(c.consultationDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+              <div class="schedule-details">
+                <h4>${c.patient?.name || 'Unknown'}</h4>
+                <p>Doctor: ${c.doctor?.fullName || 'Unknown'} | Status: ${c.status}</p>
+              </div>
+            </div>
+          `;
+        });
+      }
+
+      if (events.followUps.length > 0) {
+        html += '<h4 style="margin: 1rem 0 0.5rem; color: var(--warning);"><i class="fas fa-redo"></i> Follow-ups Due</h4>';
+        events.followUps.forEach(f => {
+          html += `
+            <div class="schedule-item" style="border-left-color: var(--warning);">
+              <div class="schedule-time">${new Date(f.nextCheckUpDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+              <div class="schedule-details">
+                <h4>${f.patient?.name || 'Unknown'}</h4>
+                <p>Doctor: ${f.doctor?.fullName || 'Unknown'}</p>
+              </div>
+            </div>
+          `;
+        });
+      }
+    }
+
+    document.getElementById('eventModalContent').innerHTML = html;
+    document.getElementById('eventModal').classList.add('active');
+  }
+
+  function closeEventModal() {
+    document.getElementById('eventModal').classList.remove('active');
+  }
+
+  function previousMonth() {
+    currentDate.setMonth(currentDate.getMonth() - 1);
+    renderCalendar();
+  }
+
+  function nextMonth() {
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    renderCalendar();
+  }
+
+  function goToToday() {
+    currentDate = new Date();
+    renderCalendar();
+  }
+</script>

@@ -1,0 +1,258 @@
+<div class="page-header">
+  <h2><i class="fas fa-concierge-bell"></i> Medical Services</h2>
+  <p>Manage clinic services like vaccinations, surgeries, checkups, and more</p>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="search-bar" style="margin: 0; flex: 1;">
+      <input type="text" id="searchInput" placeholder="Search services..." class="form-control">
+      <select id="categoryFilter" class="form-control" style="max-width: 180px;">
+        <option value="">All Categories</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="openServiceModal()">
+      <i class="fas fa-plus"></i> Add Service
+    </button>
+  </div>
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Service Name</th>
+          <th>Category</th>
+          <th>Price</th>
+          <th>Duration</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="servicesTable">
+        <tr><td colspan="6" class="text-center"><div class="spinner"></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Service Modal -->
+<div class="modal-overlay" id="serviceModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="serviceModalTitle">Add Service</h3>
+      <button class="modal-close" onclick="closeServiceModal()">&times;</button>
+    </div>
+    <form id="serviceForm">
+      <input type="hidden" id="serviceId">
+
+      <div class="form-group">
+        <label class="form-label">Service Name *</label>
+        <input type="text" id="name" class="form-control" required placeholder="e.g., General Checkup">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select id="category" class="form-control">
+            <option value="">Select Category</option>
+            <option value="Vaccination">Vaccination</option>
+            <option value="Surgery">Surgery</option>
+            <option value="Grooming">Grooming</option>
+            <option value="Checkup">Checkup</option>
+            <option value="Laboratory">Laboratory</option>
+            <option value="Dental">Dental</option>
+            <option value="Emergency">Emergency</option>
+            <option value="Consultation">Consultation</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Price *</label>
+          <input type="number" id="price" class="form-control" required step="0.01" placeholder="0.00">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Duration (minutes)</label>
+          <input type="number" id="duration" class="form-control" placeholder="30">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select id="isActive" class="form-control">
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea id="description" class="form-control textarea" rows="3" placeholder="Service description..."></textarea>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeServiceModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  let services = [];
+
+  document.addEventListener('DOMContentLoaded', function() {
+    loadCategories();
+    loadServices();
+    document.getElementById('serviceForm').addEventListener('submit', handleSubmit);
+    document.getElementById('searchInput').addEventListener('input', filterServices);
+    document.getElementById('categoryFilter').addEventListener('change', filterServices);
+  });
+
+  async function loadCategories() {
+    try {
+      const response = await fetch('/api/services/categories');
+      const result = await response.json();
+      if (result.success) {
+        const select = document.getElementById('categoryFilter');
+        result.data.forEach(cat => {
+          select.innerHTML += `<option value="${cat}">${cat}</option>`;
+        });
+      }
+    } catch (error) {
+      console.error('Error loading categories:', error);
+    }
+  }
+
+  async function loadServices() {
+    try {
+      const response = await fetch('/api/services');
+      const result = await response.json();
+      if (result.success) {
+        services = result.data;
+        renderServices();
+      }
+    } catch (error) {
+      console.error('Error loading services:', error);
+    }
+  }
+
+  function renderServices() {
+    const tbody = document.getElementById('servicesTable');
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const categoryFilter = document.getElementById('categoryFilter').value;
+
+    let filtered = services.filter(s => {
+      const matchSearch = !search || s.name?.toLowerCase().includes(search) || s.description?.toLowerCase().includes(search);
+      const matchCategory = !categoryFilter || s.category === categoryFilter;
+      return matchSearch && matchCategory;
+    });
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center">No services found</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(s => `
+      <tr>
+        <td><strong>${s.name}</strong>${s.description ? `<br><small>${s.description.substring(0, 50)}...</small>` : ''}</td>
+        <td>${s.category || '-'}</td>
+        <td><strong>₱${s.price.toFixed(2)}</strong></td>
+        <td>${s.duration ? s.duration + ' min' : '-'}</td>
+        <td><span class="badge ${s.isActive ? 'badge-success' : 'badge-secondary'}">${s.isActive ? 'Active' : 'Inactive'}</span></td>
+        <td>
+          <div class="action-buttons">
+            <button class="btn btn-sm btn-primary" onclick="editService(${s.id})"><i class="fas fa-edit"></i></button>
+            <button class="btn btn-sm btn-danger" onclick="deleteService(${s.id})"><i class="fas fa-trash"></i></button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function filterServices() {
+    renderServices();
+  }
+
+  function openServiceModal() {
+    document.getElementById('serviceModalTitle').textContent = 'Add Service';
+    document.getElementById('serviceForm').reset();
+    document.getElementById('serviceId').value = '';
+    document.getElementById('serviceModal').classList.add('active');
+  }
+
+  function closeServiceModal() {
+    document.getElementById('serviceModal').classList.remove('active');
+  }
+
+  function editService(id) {
+    const service = services.find(s => s.id === id);
+    if (!service) return;
+
+    document.getElementById('serviceModalTitle').textContent = 'Edit Service';
+    document.getElementById('serviceId').value = id;
+    document.getElementById('name').value = service.name;
+    document.getElementById('category').value = service.category || '';
+    document.getElementById('price').value = service.price;
+    document.getElementById('duration').value = service.duration || '';
+    document.getElementById('isActive').value = service.isActive.toString();
+    document.getElementById('description').value = service.description || '';
+
+    document.getElementById('serviceModal').classList.add('active');
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+
+    const id = document.getElementById('serviceId').value;
+    const data = {
+      name: document.getElementById('name').value,
+      category: document.getElementById('category').value,
+      price: document.getElementById('price').value,
+      duration: document.getElementById('duration').value,
+      isActive: document.getElementById('isActive').value === 'true',
+      description: document.getElementById('description').value,
+    };
+
+    try {
+      const url = id ? `/api/services/${id}` : '/api/services';
+      const method = id ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        alert(result.message);
+        closeServiceModal();
+        loadServices();
+      } else {
+        alert(result.message || 'Failed to save');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred');
+    }
+  }
+
+  async function deleteService(id) {
+    if (!confirm('Delete this service?')) return;
+
+    try {
+      const response = await fetch(`/api/services/${id}`, { method: 'DELETE' });
+      const result = await response.json();
+      if (result.success) {
+        loadServices();
+      } else {
+        alert(result.message || 'Failed to delete');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred');
+    }
+  }
+</script>

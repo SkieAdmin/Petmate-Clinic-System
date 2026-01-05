@@ -39,15 +39,20 @@ body {
   background-color: var(--primary-green);
   color: white;
   position: fixed;
+  top: 0;
+  left: 0;
   height: 100vh;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   transition: transform 0.3s ease;
   z-index: 1000;
+  overflow: hidden;
 }
 
 .sidebar-header {
   padding: 1.5rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  flex: 0 0 auto;
 }
 
 .sidebar-header h1 {
@@ -57,6 +62,10 @@ body {
 
 .sidebar-nav {
   padding: 1rem 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
 }
 
 .nav-item {
@@ -431,92 +440,103 @@ tbody tr:hover {
 
 /* Sidebar Footer - User Profile */
 .sidebar-footer {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 1rem;
+  padding: 0.75rem 1rem;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  background-color: rgba(0, 0, 0, 0.1);
+  background-color: rgba(0, 0, 0, 0.2);
+  flex: 0 0 auto;
+  margin-top: auto;
 }
 
 .user-profile {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 0.75rem;
-  background-color: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  margin-bottom: 0.75rem;
+  gap: 10px;
+  padding: 0.6rem 0.75rem;
+  background-color: rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  margin-bottom: 0.6rem;
 }
 
 .user-avatar {
-  width: 40px;
-  height: 40px;
-  background-color: rgba(255, 255, 255, 0.1);
+  width: 36px;
+  height: 36px;
+  background-color: rgba(255, 255, 255, 0.15);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
+  flex-shrink: 0;
 }
 
 .user-avatar i {
-  font-size: 24px;
+  font-size: 20px;
 }
 
 .user-info {
   flex: 1;
-  overflow: hidden;
+  min-width: 0;
 }
 
 .user-name {
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
   color: white;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   text-transform: capitalize;
+  line-height: 1.3;
 }
 
 .user-role {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.7);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .logout-btn {
   width: 100%;
-  padding: 0.75rem;
-  background-color: rgba(220, 53, 69, 0.9);
+  padding: 0.6rem;
+  background-color: rgba(220, 53, 69, 0.85);
   color: white;
   border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 600;
+  border-radius: 5px;
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .logout-btn:hover {
-  background-color: #c82333;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+  background-color: #dc3545;
 }
 
 .logout-btn i {
-  font-size: 14px;
+  font-size: 13px;
 }
 
-/* Update sidebar to accommodate footer */
-.sidebar {
-  padding-bottom: 160px;
+/* Custom scrollbar for sidebar nav */
+.sidebar-nav::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 /* Improved Card Styles */
@@ -604,4 +624,466 @@ tbody tr:hover {
 
 .page-header h2 i {
   color: var(--light-green);
+}
+
+/* Collapsible Sidebar Sections */
+.nav-section {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+}
+
+.nav-section-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  color: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.nav-section-title:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.nav-section-title i:first-child {
+  width: 20px;
+  margin-right: 10px;
+}
+
+.section-arrow {
+  transition: transform 0.3s ease;
+  font-size: 0.75rem;
+}
+
+.section-arrow.rotated {
+  transform: rotate(180deg);
+}
+
+.nav-section-items {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.nav-section-items.expanded {
+  max-height: 500px;
+}
+
+.nav-item.sub-item {
+  padding-left: 3rem;
+  font-size: 0.875rem;
+  border-left: none;
+  position: relative;
+}
+
+.nav-item.sub-item::before {
+  content: '';
+  position: absolute;
+  left: 1.5rem;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-50%);
+}
+
+.nav-item.sub-item.active::before {
+  background-color: var(--light-green);
+}
+
+.nav-item.sub-item i {
+  font-size: 0.8rem;
+}
+
+/* Status Badges */
+.badge-primary {
+  background-color: var(--primary-green);
+  color: white;
+}
+
+.badge-secondary {
+  background-color: var(--text-light);
+  color: white;
+}
+
+/* Consultation-specific styles */
+.consultation-card {
+  border-left: 4px solid var(--primary-green);
+  margin-bottom: 1rem;
+}
+
+.consultation-card.completed {
+  border-left-color: var(--success);
+}
+
+.consultation-card.for-followup {
+  border-left-color: var(--warning);
+}
+
+.consultation-card.ongoing {
+  border-left-color: var(--light-green);
+}
+
+.patient-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.patient-avatar {
+  width: 60px;
+  height: 60px;
+  background-color: var(--light-bg);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: var(--primary-green);
+}
+
+.patient-details h4 {
+  margin: 0;
+  color: var(--text-dark);
+}
+
+.patient-details p {
+  margin: 0;
+  color: var(--text-light);
+  font-size: 0.875rem;
+}
+
+/* Consultation form textarea */
+.form-control.textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+/* Calendar styles */
+.calendar-container {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.calendar-nav {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.calendar-nav button {
+  background: var(--light-bg);
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.calendar-nav button:hover {
+  background: var(--primary-green);
+  color: white;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.calendar-day-header {
+  text-align: center;
+  padding: 0.75rem;
+  font-weight: 600;
+  color: var(--text-light);
+  font-size: 0.875rem;
+}
+
+.calendar-day {
+  min-height: 100px;
+  padding: 0.5rem;
+  background: var(--light-bg);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.calendar-day:hover {
+  background: var(--border-color);
+}
+
+.calendar-day.today {
+  background: rgba(45, 106, 79, 0.1);
+  border: 2px solid var(--primary-green);
+}
+
+.calendar-day.other-month {
+  opacity: 0.5;
+}
+
+.calendar-day-number {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.calendar-event {
+  font-size: 0.7rem;
+  padding: 2px 4px;
+  margin-bottom: 2px;
+  border-radius: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.calendar-event.appointment {
+  background: var(--light-green);
+  color: white;
+}
+
+.calendar-event.followup {
+  background: var(--warning);
+  color: var(--text-dark);
+}
+
+.calendar-event.consultation {
+  background: var(--primary-green);
+  color: white;
+}
+
+/* Daily Schedule styles */
+.schedule-timeline {
+  position: relative;
+}
+
+.schedule-item {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border-left: 4px solid var(--primary-green);
+}
+
+.schedule-time {
+  font-weight: 600;
+  color: var(--primary-green);
+  min-width: 80px;
+}
+
+.schedule-details {
+  flex: 1;
+}
+
+.schedule-details h4 {
+  margin: 0 0 0.25rem 0;
+}
+
+.schedule-details p {
+  margin: 0;
+  color: var(--text-light);
+  font-size: 0.875rem;
+}
+
+/* Modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  transform: scale(0.9);
+  transition: transform 0.3s ease;
+}
+
+.modal-overlay.active .modal {
+  transform: scale(1);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: var(--primary-green);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-light);
+  transition: color 0.3s ease;
+}
+
+.modal-close:hover {
+  color: var(--danger);
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-light);
+}
+
+.empty-state i {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.empty-state h3 {
+  margin-bottom: 0.5rem;
+  color: var(--text-dark);
+}
+
+/* Action buttons group */
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  border-bottom: 2px solid var(--border-color);
+  margin-bottom: 1.5rem;
+}
+
+.tab {
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-size: 1rem;
+  color: var(--text-light);
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.tab:hover {
+  color: var(--primary-green);
+}
+
+.tab.active {
+  color: var(--primary-green);
+  font-weight: 600;
+}
+
+.tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--primary-green);
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* Filter bar */
+.filter-bar {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-group label {
+  font-weight: 500;
+  color: var(--text-light);
+  font-size: 0.875rem;
+}
+
+.filter-group select,
+.filter-group input {
+  padding: 0.5rem;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 0.875rem;
+}
+
+/* Responsive adjustments for sidebar */
+@media (max-width: 768px) {
+  .nav-section-items.expanded {
+    max-height: 300px;
+  }
+
+  .sidebar-footer {
+    padding: 0.75rem;
+  }
+
+  .user-profile {
+    padding: 0.5rem;
+  }
 }

@@ -1,0 +1,529 @@
+<div class="page-header">
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+      <h2><i class="fas fa-file-medical"></i> Consultation Details</h2>
+      <p id="consultationDate">Loading...</p>
+    </div>
+    <div class="action-buttons">
+      <button class="btn btn-secondary" onclick="goBack()"><i class="fas fa-arrow-left"></i> Back</button>
+      <button class="btn btn-primary" onclick="editConsultation()"><i class="fas fa-edit"></i> Edit</button>
+      <button class="btn btn-success" id="addFollowUpBtn" onclick="addFollowUp()" style="display: none;"><i class="fas fa-plus"></i> Add Follow-up</button>
+      <button class="btn btn-info" onclick="printConsultation()"><i class="fas fa-print"></i> Print</button>
+    </div>
+  </div>
+</div>
+
+<div class="consultation-detail-container">
+  <div class="row">
+    <!-- Patient Info Sidebar -->
+    <div class="col-sidebar">
+      <div class="card patient-info-card">
+        <div class="card-header">
+          <h3 class="card-title"><i class="fas fa-paw"></i> Patient</h3>
+        </div>
+        <div id="patientInfo">
+          <div class="patient-avatar">
+            <i class="fas fa-dog"></i>
+          </div>
+          <div class="info-row">
+            <label>Name</label>
+            <p id="patientName">-</p>
+          </div>
+          <div class="info-row">
+            <label>Species / Breed</label>
+            <p id="patientBreed">-</p>
+          </div>
+          <div class="info-row">
+            <label>Age / Gender</label>
+            <p id="patientAgeGender">-</p>
+          </div>
+          <hr>
+          <div class="info-row">
+            <label>Owner</label>
+            <p id="ownerName">-</p>
+          </div>
+          <div class="info-row">
+            <label>Contact</label>
+            <p id="ownerContact">-</p>
+          </div>
+          <div class="info-row">
+            <label>Address</label>
+            <p id="ownerAddress">-</p>
+          </div>
+        </div>
+        <button class="btn btn-outline-primary btn-block mt-2" onclick="viewPatientProfile()">
+          <i class="fas fa-user"></i> View Full Profile
+        </button>
+      </div>
+
+      <!-- Doctor Info -->
+      <div class="card mt-3">
+        <div class="card-header">
+          <h3 class="card-title"><i class="fas fa-user-md"></i> Attending Veterinarian</h3>
+        </div>
+        <div class="info-row">
+          <p id="doctorName">-</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="col-main">
+      <!-- Status Banner -->
+      <div class="status-banner" id="statusBanner">
+        <span class="badge" id="statusBadge">-</span>
+        <span id="nextCheckUp" style="display: none;">
+          <i class="fas fa-calendar-check"></i> Next Check-up: <strong id="nextCheckUpDate">-</strong>
+        </span>
+      </div>
+
+      <!-- Vital Signs -->
+      <div class="card detail-section">
+        <div class="section-header">
+          <h4><i class="fas fa-heartbeat"></i> Vital Signs</h4>
+        </div>
+        <div class="vitals-grid">
+          <div class="vital-item">
+            <span class="vital-label">Weight</span>
+            <span class="vital-value" id="weight">-</span>
+          </div>
+          <div class="vital-item">
+            <span class="vital-label">Temperature</span>
+            <span class="vital-value" id="temperature">-</span>
+          </div>
+          <div class="vital-item" id="otherVitalsItem" style="display: none;">
+            <span class="vital-label">Other</span>
+            <span class="vital-value" id="vitalSigns">-</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Diagnosis -->
+      <div class="card detail-section">
+        <div class="section-header">
+          <h4><i class="fas fa-stethoscope"></i> Diagnosis (DX)</h4>
+        </div>
+        <div class="section-content">
+          <p id="diagnosis" class="preformatted">-</p>
+        </div>
+      </div>
+
+      <!-- Treatment -->
+      <div class="card detail-section" id="treatmentSection">
+        <div class="section-header">
+          <h4><i class="fas fa-syringe"></i> Treatment (TX)</h4>
+        </div>
+        <div class="section-content">
+          <p id="treatment" class="preformatted">-</p>
+        </div>
+      </div>
+
+      <!-- Prescription -->
+      <div class="card detail-section" id="prescriptionSection">
+        <div class="section-header">
+          <h4><i class="fas fa-prescription"></i> Prescription (RX)</h4>
+        </div>
+        <div class="section-content">
+          <p id="prescription" class="preformatted">-</p>
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div class="card detail-section" id="notesSection">
+        <div class="section-header">
+          <h4><i class="fas fa-clipboard"></i> Additional Notes</h4>
+        </div>
+        <div class="section-content">
+          <p id="notes" class="preformatted">-</p>
+        </div>
+      </div>
+
+      <!-- Related Consultations -->
+      <div class="card mt-3" id="relatedSection" style="display: none;">
+        <div class="card-header">
+          <h3 class="card-title"><i class="fas fa-link"></i> Related Consultations</h3>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Diagnosis</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="relatedTable">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Print Styles -->
+<style>
+  .consultation-detail-container {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .row {
+    display: flex;
+    gap: 1.5rem;
+  }
+
+  .col-sidebar {
+    width: 280px;
+    flex-shrink: 0;
+  }
+
+  .col-main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .patient-info-card .patient-avatar {
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+
+  .patient-avatar i {
+    font-size: 3.5rem;
+    color: var(--primary-color);
+    background: var(--bg-light);
+    padding: 1rem;
+    border-radius: 50%;
+  }
+
+  .info-row {
+    margin-bottom: 0.75rem;
+  }
+
+  .info-row label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+
+  .info-row p {
+    margin: 0;
+    font-weight: 500;
+  }
+
+  .status-banner {
+    background: var(--bg-light);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .detail-section {
+    margin-bottom: 1rem;
+  }
+
+  .section-header {
+    background: var(--primary-color);
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: 8px 8px 0 0;
+    margin: -1rem -1rem 1rem -1rem;
+  }
+
+  .section-header h4 {
+    margin: 0;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .section-content {
+    padding: 0.5rem 0;
+  }
+
+  .preformatted {
+    white-space: pre-wrap;
+    font-family: inherit;
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  .vitals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+  }
+
+  .vital-item {
+    text-align: center;
+    padding: 1rem;
+    background: var(--bg-light);
+    border-radius: 8px;
+  }
+
+  .vital-label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 0.25rem;
+  }
+
+  .vital-value {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: var(--primary-color);
+  }
+
+  .btn-block {
+    width: 100%;
+    display: block;
+  }
+
+  .btn-outline-primary {
+    background: transparent;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+  }
+
+  .btn-outline-primary:hover {
+    background: var(--primary-color);
+    color: white;
+  }
+
+  @media (max-width: 992px) {
+    .row {
+      flex-direction: column;
+    }
+
+    .col-sidebar {
+      width: 100%;
+    }
+  }
+
+  @media print {
+    .page-header .action-buttons,
+    .col-sidebar,
+    #relatedSection,
+    .btn {
+      display: none !important;
+    }
+
+    .row {
+      display: block;
+    }
+
+    .col-main {
+      width: 100%;
+    }
+
+    .card {
+      box-shadow: none;
+      border: 1px solid #ddd;
+      page-break-inside: avoid;
+    }
+
+    .section-header {
+      background: #333 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+  }
+</style>
+
+<script>
+  let consultation = null;
+  let patientId = null;
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const consultationId = urlParams.get('id');
+
+    if (consultationId) {
+      loadConsultation(consultationId);
+    } else {
+      alert('No consultation ID provided');
+      goBack();
+    }
+  });
+
+  async function loadConsultation(id) {
+    try {
+      const response = await fetch(`/api/consultations/${id}`);
+      const result = await response.json();
+      if (result.success) {
+        consultation = result.data;
+        patientId = consultation.patientId;
+        displayConsultation(consultation);
+        loadRelatedConsultations();
+      } else {
+        alert('Consultation not found');
+        goBack();
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error loading consultation');
+    }
+  }
+
+  function displayConsultation(c) {
+    // Header
+    document.getElementById('consultationDate').textContent =
+      `Consultation on ${new Date(c.consultationDate).toLocaleDateString()} at ${new Date(c.consultationDate).toLocaleTimeString()}`;
+
+    // Status
+    const statusBadge = document.getElementById('statusBadge');
+    statusBadge.textContent = c.status;
+    statusBadge.className = `badge ${getStatusBadge(c.status)}`;
+
+    // Show follow-up button if needed
+    if (c.status === 'For Follow-up' || c.status === 'Ongoing') {
+      document.getElementById('addFollowUpBtn').style.display = 'inline-block';
+    }
+
+    // Next check-up
+    if (c.nextCheckUpDate) {
+      document.getElementById('nextCheckUp').style.display = 'inline';
+      document.getElementById('nextCheckUpDate').textContent = new Date(c.nextCheckUpDate).toLocaleDateString();
+    }
+
+    // Vitals
+    document.getElementById('weight').textContent = c.weight ? `${c.weight} kg` : '-';
+    document.getElementById('temperature').textContent = c.temperature ? `${c.temperature} °C` : '-';
+    if (c.vitalSigns) {
+      document.getElementById('otherVitalsItem').style.display = 'block';
+      document.getElementById('vitalSigns').textContent = c.vitalSigns;
+    }
+
+    // Clinical info
+    document.getElementById('diagnosis').textContent = c.diagnosis || 'No diagnosis recorded';
+
+    if (c.treatment) {
+      document.getElementById('treatment').textContent = c.treatment;
+    } else {
+      document.getElementById('treatmentSection').style.display = 'none';
+    }
+
+    if (c.prescription) {
+      document.getElementById('prescription').textContent = c.prescription;
+    } else {
+      document.getElementById('prescriptionSection').style.display = 'none';
+    }
+
+    if (c.notes) {
+      document.getElementById('notes').textContent = c.notes;
+    } else {
+      document.getElementById('notesSection').style.display = 'none';
+    }
+
+    // Patient info
+    if (c.patient) {
+      displayPatientInfo(c.patient);
+    }
+
+    // Doctor info
+    document.getElementById('doctorName').textContent = c.doctor?.name || 'Unknown';
+  }
+
+  function displayPatientInfo(patient) {
+    document.getElementById('patientName').textContent = patient.name || '-';
+    document.getElementById('patientBreed').textContent =
+      `${patient.species || '-'} / ${patient.breed || 'Unknown breed'}`;
+
+    let age = '-';
+    if (patient.birthDate) {
+      const birth = new Date(patient.birthDate);
+      const now = new Date();
+      const years = Math.floor((now - birth) / (365.25 * 24 * 60 * 60 * 1000));
+      const months = Math.floor(((now - birth) % (365.25 * 24 * 60 * 60 * 1000)) / (30.44 * 24 * 60 * 60 * 1000));
+      age = years > 0 ? `${years}y ${months}m` : `${months}m`;
+    }
+    document.getElementById('patientAgeGender').textContent = `${age} / ${patient.gender || '-'}`;
+
+    document.getElementById('ownerName').textContent = patient.client?.name || '-';
+    document.getElementById('ownerContact').textContent = patient.client?.phone || patient.client?.email || '-';
+    document.getElementById('ownerAddress').textContent = patient.client?.address || '-';
+
+    // Update avatar based on species
+    const avatar = document.querySelector('.patient-avatar i');
+    switch(patient.species?.toLowerCase()) {
+      case 'cat': avatar.className = 'fas fa-cat'; break;
+      case 'bird': avatar.className = 'fas fa-dove'; break;
+      default: avatar.className = 'fas fa-dog';
+    }
+  }
+
+  async function loadRelatedConsultations() {
+    if (!patientId) return;
+
+    try {
+      const response = await fetch(`/api/consultations?patientId=${patientId}`);
+      const result = await response.json();
+      if (result.success && result.data.length > 1) {
+        const related = result.data.filter(c => c.id !== consultation.id);
+        if (related.length > 0) {
+          renderRelatedConsultations(related);
+          document.getElementById('relatedSection').style.display = 'block';
+        }
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  }
+
+  function renderRelatedConsultations(consultations) {
+    const tbody = document.getElementById('relatedTable');
+    tbody.innerHTML = consultations.slice(0, 5).map(c => `
+      <tr>
+        <td>${new Date(c.consultationDate).toLocaleDateString()}</td>
+        <td>${c.diagnosis?.substring(0, 40) || '-'}${c.diagnosis?.length > 40 ? '...' : ''}</td>
+        <td><span class="badge ${getStatusBadge(c.status)}">${c.status}</span></td>
+        <td>
+          <button class="btn btn-sm btn-info" onclick="window.location.href='/consultation-detail?id=${c.id}'">
+            <i class="fas fa-eye"></i>
+          </button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function getStatusBadge(status) {
+    switch(status) {
+      case 'Completed': return 'badge-success';
+      case 'For Follow-up': return 'badge-warning';
+      case 'Ongoing': return 'badge-info';
+      default: return 'badge-secondary';
+    }
+  }
+
+  function editConsultation() {
+    if (consultation) {
+      window.location.href = `/consultation-form?id=${consultation.id}`;
+    }
+  }
+
+  function addFollowUp() {
+    if (patientId) {
+      window.location.href = `/consultation-form?patientId=${patientId}`;
+    }
+  }
+
+  function viewPatientProfile() {
+    if (patientId) {
+      window.location.href = `/patients?id=${patientId}`;
+    }
+  }
+
+  function printConsultation() {
+    window.print();
+  }
+
+  function goBack() {
+    window.history.back();
+  }
+</script>

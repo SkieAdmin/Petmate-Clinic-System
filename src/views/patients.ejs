@@ -42,11 +42,11 @@
 </div>
 
 <!-- Add/Edit Patient Modal -->
-<div id="patientModal" class="modal hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: none; align-items: center; justify-content: center;">
-  <div class="card" style="width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto;">
-    <div class="card-header">
-      <h3 class="card-title" id="modalTitle">Add Patient</h3>
-      <button onclick="closeModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+<div class="modal-overlay" id="patientModal">
+  <div class="modal" style="max-width: 650px;">
+    <div class="modal-header">
+      <h3 id="modalTitle">Add Patient</h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
     </div>
     <form id="patientForm" onsubmit="savePatient(event)">
       <input type="hidden" id="patientId">
@@ -62,7 +62,7 @@
           onkeyup="filterClients()"
           onfocus="showClientDropdown()"
         >
-        <select id="patientClient" class="form-control" required style="margin-top: 5px;" size="5" onchange="selectClient()" onfocus="showClientDropdown()">
+        <select id="patientClient" class="form-control" required style="margin-top: 5px; display: none;" size="5" onchange="selectClient()" onfocus="showClientDropdown()">
           <option value="">-- Select a client --</option>
         </select>
         <input type="hidden" id="selectedClientId" required>
@@ -98,27 +98,67 @@
         </div>
 
         <div class="form-group">
+          <label class="form-label">Gender</label>
+          <select id="patientGender" class="form-control">
+            <option value="">Select gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
           <label class="form-label">Weight (kg)</label>
           <input type="number" id="patientWeight" class="form-control" step="0.1" min="0" placeholder="e.g., 5.5">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Birth Date</label>
+          <input type="date" id="patientBirthDate" class="form-control">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Contact Number (CP)</label>
+          <input type="text" id="patientPhone" class="form-control" placeholder="e.g., 09123456789">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Color/Markings</label>
+          <input type="text" id="patientColor" class="form-control" placeholder="e.g., Brown with white spots">
         </div>
       </div>
 
       <div class="form-group">
-        <label class="form-label">Birth Date</label>
-        <input type="date" id="patientBirthDate" class="form-control">
+        <label class="form-label">Address</label>
+        <input type="text" id="patientAddress" class="form-control" placeholder="Complete address">
       </div>
 
       <div class="form-group">
-        <label class="form-label">Notes</label>
-        <textarea id="patientNotes" class="form-control" rows="3" placeholder="Medical history, allergies, behavioral notes, etc."></textarea>
+        <label class="form-label">Notes / Medical History</label>
+        <textarea id="patientNotes" class="form-control" rows="2" placeholder="Medical history, allergies, behavioral notes, etc."></textarea>
       </div>
 
-      <div class="flex gap-1">
-        <button type="submit" class="btn btn-primary">
-          <i class="fas fa-save"></i> Save Patient
-        </button>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">TX (Treatment)</label>
+          <textarea id="patientTX" class="form-control" rows="2" placeholder="Treatment history..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">RX (Prescription)</label>
+          <textarea id="patientRX" class="form-control" rows="2" placeholder="Prescription history..."></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
         <button type="button" class="btn btn-secondary" onclick="closeModal()">
           <i class="fas fa-times"></i> Cancel
+        </button>
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-save"></i> Save Patient
         </button>
       </div>
     </form>
@@ -253,8 +293,7 @@
     document.getElementById('clientSearch').value = '';
     document.getElementById('selectedClientId').value = '';
     document.getElementById('patientClient').style.display = 'none';
-    document.getElementById('patientModal').classList.remove('hidden');
-    document.getElementById('patientModal').style.display = 'flex';
+    document.getElementById('patientModal').classList.add('active');
   }
 
   async function editPatient(id) {
@@ -277,11 +316,16 @@
         document.getElementById('patientName').value = patient.name;
         document.getElementById('patientSpecies').value = patient.species;
         document.getElementById('patientBreed').value = patient.breed || '';
+        document.getElementById('patientGender').value = patient.gender || '';
         document.getElementById('patientWeight').value = patient.weight || '';
         document.getElementById('patientBirthDate').value = patient.birthDate ? patient.birthDate.split('T')[0] : '';
+        document.getElementById('patientPhone').value = patient.phone || '';
+        document.getElementById('patientColor').value = patient.color || '';
+        document.getElementById('patientAddress').value = patient.address || '';
         document.getElementById('patientNotes').value = patient.notes || '';
-        document.getElementById('patientModal').classList.remove('hidden');
-        document.getElementById('patientModal').style.display = 'flex';
+        document.getElementById('patientTX').value = patient.treatment || '';
+        document.getElementById('patientRX').value = patient.prescription || '';
+        document.getElementById('patientModal').classList.add('active');
       }
     } catch (error) {
       console.error('Error loading patient:', error);
@@ -305,9 +349,15 @@
       name: document.getElementById('patientName').value,
       species: document.getElementById('patientSpecies').value,
       breed: document.getElementById('patientBreed').value || null,
+      gender: document.getElementById('patientGender').value || null,
       weight: document.getElementById('patientWeight').value ? parseFloat(document.getElementById('patientWeight').value) : null,
       birthDate: document.getElementById('patientBirthDate').value || null,
+      phone: document.getElementById('patientPhone').value || null,
+      color: document.getElementById('patientColor').value || null,
+      address: document.getElementById('patientAddress').value || null,
       notes: document.getElementById('patientNotes').value || null,
+      treatment: document.getElementById('patientTX').value || null,
+      prescription: document.getElementById('patientRX').value || null,
     };
 
     const url = id ? `/api/patients/${id}` : '/api/patients';
@@ -341,8 +391,7 @@
   }
 
   function closeModal() {
-    document.getElementById('patientModal').classList.add('hidden');
-    document.getElementById('patientModal').style.display = 'none';
+    document.getElementById('patientModal').classList.remove('active');
   }
 
   async function deletePatient(id) {

@@ -15,37 +15,147 @@
         <h1><i class="fas fa-paw"></i> Petmate Clinic</h1>
       </div>
       <nav class="sidebar-nav">
+        <!-- Dashboard -->
         <a href="/dashboard" class="nav-item <%= title === 'Dashboard' ? 'active' : '' %>">
           <i class="fas fa-home"></i> Dashboard
         </a>
+
+        <!-- Doctor Module - Consultations -->
+        <% if (typeof user !== 'undefined' && (user.role === 'Admin' || user.role === 'Doctor')) { %>
+        <a href="/consultations" class="nav-item <%= title === 'Consultations' || title === 'Consultation Form' || title === 'Consultation Details' ? 'active' : '' %>">
+          <i class="fas fa-stethoscope"></i> Consultations
+        </a>
+        <% } %>
+
+        <!-- Calendar & Schedule -->
+        <a href="/calendar" class="nav-item <%= title === 'Clinic Calendar' ? 'active' : '' %>">
+          <i class="fas fa-calendar"></i> Clinic Calendar
+        </a>
+        <a href="/daily-schedule" class="nav-item <%= title === 'Daily Schedule' ? 'active' : '' %>">
+          <i class="fas fa-clock"></i> Daily Schedule
+        </a>
+
+        <!-- Clients (Not for Doctors) -->
         <% if (typeof user !== 'undefined' && user.role !== 'Doctor') { %>
         <a href="/clients" class="nav-item <%= title === 'Clients' ? 'active' : '' %>">
           <i class="fas fa-users"></i> Clients
         </a>
         <% } %>
+
+        <!-- Patients (Not for Frontdesk) -->
         <% if (typeof user !== 'undefined' && user.role !== 'Frontdesk') { %>
         <a href="/patients" class="nav-item <%= title === 'Patients' ? 'active' : '' %>">
           <i class="fas fa-paw"></i> Patients
         </a>
         <% } %>
+
+        <!-- Appointments -->
         <a href="/appointments" class="nav-item <%= title === 'Appointments' ? 'active' : '' %>">
           <i class="fas fa-calendar-alt"></i> Appointments
         </a>
+
+        <!-- Admissions -->
+        <a href="/admissions" class="nav-item <%= title === 'Admissions' ? 'active' : '' %>">
+          <i class="fas fa-hospital"></i> Admissions
+        </a>
+
+        <!-- Inventory Section (Admin Only for some) -->
         <% if (typeof user !== 'undefined' && (user.role === 'Admin' || user.role === 'Doctor' || user.role === 'Employee')) { %>
-        <a href="/inventory" class="nav-item <%= title === 'Inventory' ? 'active' : '' %>">
-          <i class="fas fa-boxes"></i> Inventory
-        </a>
+        <div class="nav-section">
+          <div class="nav-section-title" onclick="toggleSection('inventory')">
+            <i class="fas fa-boxes"></i> Inventory
+            <i class="fas fa-chevron-down section-arrow" id="inventory-arrow"></i>
+          </div>
+          <div class="nav-section-items" id="inventory-items">
+            <a href="/inventory" class="nav-item sub-item <%= title === 'Inventory' ? 'active' : '' %>">
+              <i class="fas fa-box"></i> Items
+            </a>
+            <a href="/services" class="nav-item sub-item <%= title === 'Services' ? 'active' : '' %>">
+              <i class="fas fa-concierge-bell"></i> Services
+            </a>
+            <% if (typeof user !== 'undefined' && user.role === 'Admin') { %>
+            <a href="/suppliers" class="nav-item sub-item <%= title === 'Suppliers' ? 'active' : '' %>">
+              <i class="fas fa-truck"></i> Suppliers
+            </a>
+            <a href="/purchase-orders" class="nav-item sub-item <%= title === 'Purchase Orders' ? 'active' : '' %>">
+              <i class="fas fa-file-invoice"></i> Purchase Orders
+            </a>
+            <a href="/receiving-reports" class="nav-item sub-item <%= title === 'Receiving Reports' ? 'active' : '' %>">
+              <i class="fas fa-clipboard-check"></i> Receiving Reports
+            </a>
+            <% } %>
+          </div>
+        </div>
         <% } %>
+
+        <!-- Sales Section (Admin Only) -->
         <% if (typeof user !== 'undefined' && user.role === 'Admin') { %>
-        <a href="/invoices" class="nav-item <%= title === 'Invoices' ? 'active' : '' %>">
-          <i class="fas fa-file-invoice-dollar"></i> Invoices
-        </a>
+        <div class="nav-section">
+          <div class="nav-section-title" onclick="toggleSection('sales')">
+            <i class="fas fa-cash-register"></i> Sales
+            <i class="fas fa-chevron-down section-arrow" id="sales-arrow"></i>
+          </div>
+          <div class="nav-section-items" id="sales-items">
+            <a href="/invoices" class="nav-item sub-item <%= title === 'Invoices' ? 'active' : '' %>">
+              <i class="fas fa-file-invoice-dollar"></i> Billing Invoice
+            </a>
+            <a href="/walkin-invoices" class="nav-item sub-item <%= title === 'Walk-in Invoices' ? 'active' : '' %>">
+              <i class="fas fa-walking"></i> Walk-in Invoice
+            </a>
+            <a href="/payment-transactions" class="nav-item sub-item <%= title === 'Payment Transactions' ? 'active' : '' %>">
+              <i class="fas fa-money-bill-wave"></i> Payment Transactions
+            </a>
+            <a href="/credit-deposits" class="nav-item sub-item <%= title === 'Credit Deposits' ? 'active' : '' %>">
+              <i class="fas fa-piggy-bank"></i> Credit Deposits
+            </a>
+            <a href="/expenses" class="nav-item sub-item <%= title === 'Expenses' ? 'active' : '' %>">
+              <i class="fas fa-receipt"></i> Expenses
+            </a>
+          </div>
+        </div>
+        <% } %>
+
+        <!-- HR Section (Admin Only) -->
+        <% if (typeof user !== 'undefined' && user.role === 'Admin') { %>
+        <div class="nav-section">
+          <div class="nav-section-title" onclick="toggleSection('hr')">
+            <i class="fas fa-user-tie"></i> Human Resource
+            <i class="fas fa-chevron-down section-arrow" id="hr-arrow"></i>
+          </div>
+          <div class="nav-section-items" id="hr-items">
+            <a href="/employees" class="nav-item sub-item <%= title === 'Employees' ? 'active' : '' %>">
+              <i class="fas fa-id-badge"></i> Employees
+            </a>
+          </div>
+        </div>
+        <% } %>
+
+        <!-- Reports (Admin Only) -->
+        <% if (typeof user !== 'undefined' && user.role === 'Admin') { %>
         <a href="/reports" class="nav-item <%= title === 'Reports' ? 'active' : '' %>">
           <i class="fas fa-chart-bar"></i> Reports
         </a>
-        <a href="/audit-logs" class="nav-item <%= title === 'Audit Logs' ? 'active' : '' %>">
-          <i class="fas fa-history"></i> Audit Logs
-        </a>
+        <% } %>
+
+        <!-- System Section (Admin Only) -->
+        <% if (typeof user !== 'undefined' && user.role === 'Admin') { %>
+        <div class="nav-section">
+          <div class="nav-section-title" onclick="toggleSection('system')">
+            <i class="fas fa-cog"></i> System
+            <i class="fas fa-chevron-down section-arrow" id="system-arrow"></i>
+          </div>
+          <div class="nav-section-items" id="system-items">
+            <a href="/company-info" class="nav-item sub-item <%= title === 'Company Information' ? 'active' : '' %>">
+              <i class="fas fa-building"></i> Company Info
+            </a>
+            <a href="/import-data" class="nav-item sub-item <%= title === 'Import Data' ? 'active' : '' %>">
+              <i class="fas fa-file-import"></i> Import Data
+            </a>
+            <a href="/audit-logs" class="nav-item sub-item <%= title === 'Audit Logs' ? 'active' : '' %>">
+              <i class="fas fa-history"></i> Audit Logs
+            </a>
+          </div>
+        </div>
         <% } %>
       </nav>
 
@@ -56,7 +166,7 @@
             <i class="fas fa-user-circle"></i>
           </div>
           <div class="user-info">
-            <div class="user-name"><%= typeof user !== 'undefined' && user.email ? user.email.split('@')[0] : 'User' %></div>
+            <div class="user-name"><%= typeof user !== 'undefined' && user.fullName ? user.fullName : (typeof user !== 'undefined' && user.email ? user.email.split('@')[0] : 'User') %></div>
             <div class="user-role"><%= typeof user !== 'undefined' && user.role ? user.role : 'Staff' %></div>
           </div>
         </div>
@@ -93,6 +203,36 @@
           sidebar.classList.remove('active');
         }
       }
+    });
+
+    // Toggle collapsible sections
+    function toggleSection(sectionId) {
+      const items = document.getElementById(sectionId + '-items');
+      const arrow = document.getElementById(sectionId + '-arrow');
+
+      if (items.classList.contains('expanded')) {
+        items.classList.remove('expanded');
+        arrow.classList.remove('rotated');
+      } else {
+        items.classList.add('expanded');
+        arrow.classList.add('rotated');
+      }
+    }
+
+    // Auto-expand section if a sub-item is active
+    document.addEventListener('DOMContentLoaded', function() {
+      const sections = ['inventory', 'sales', 'hr', 'system'];
+      sections.forEach(section => {
+        const items = document.getElementById(section + '-items');
+        if (items) {
+          const hasActive = items.querySelector('.nav-item.active');
+          if (hasActive) {
+            items.classList.add('expanded');
+            const arrow = document.getElementById(section + '-arrow');
+            if (arrow) arrow.classList.add('rotated');
+          }
+        }
+      });
     });
 
     // Handle logout

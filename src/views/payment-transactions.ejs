@@ -1,0 +1,317 @@
+<div class="page-header">
+  <h2><i class="fas fa-exchange-alt"></i> Payment Transactions</h2>
+  <p>View all payment history and transactions</p>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">Total Collections (This Month)</div>
+    <div class="stat-value" id="totalCollections">₱0.00</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Cash Payments</div>
+    <div class="stat-value" id="cashTotal">₱0.00</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">GCash Payments</div>
+    <div class="stat-value" id="gcashTotal">₱0.00</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Transaction Count</div>
+    <div class="stat-value" id="transactionCount">0</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="filter-bar" style="margin: 0; flex: 1;">
+      <input type="text" id="searchInput" placeholder="Search invoice/customer..." class="form-control" style="max-width: 200px;" onkeyup="filterTransactions()">
+      <select id="methodFilter" class="form-control" style="max-width: 150px;" onchange="filterTransactions()">
+        <option value="">All Methods</option>
+        <option value="Cash">Cash</option>
+        <option value="GCash">GCash</option>
+        <option value="Mixed">Mixed</option>
+        <option value="Credit">Credit</option>
+      </select>
+      <select id="typeFilter" class="form-control" style="max-width: 150px;" onchange="filterTransactions()">
+        <option value="">All Types</option>
+        <option value="Billing">Billing</option>
+        <option value="Walk-in">Walk-in</option>
+      </select>
+      <div class="filter-group">
+        <label>From:</label>
+        <input type="date" id="startDate" class="form-control" onchange="loadTransactions()">
+      </div>
+      <div class="filter-group">
+        <label>To:</label>
+        <input type="date" id="endDate" class="form-control" onchange="loadTransactions()">
+      </div>
+    </div>
+    <button class="btn btn-secondary" onclick="exportTransactions()">
+      <i class="fas fa-download"></i> Export
+    </button>
+  </div>
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Invoice #</th>
+          <th>Type</th>
+          <th>Customer</th>
+          <th>Amount</th>
+          <th>Method</th>
+          <th>Reference</th>
+          <th>Received By</th>
+        </tr>
+      </thead>
+      <tbody id="transactionsTable">
+        <tr><td colspan="8" class="text-center"><div class="spinner"></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Daily Summary Card -->
+<div class="card mt-3">
+  <div class="card-header">
+    <h3 class="card-title">Daily Summary</h3>
+  </div>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Transactions</th>
+          <th>Cash</th>
+          <th>GCash</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody id="dailySummaryTable">
+        <tr><td colspan="5" class="text-center"><div class="spinner"></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  let transactions = [];
+  let dailySummary = [];
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    document.getElementById('startDate').value = firstDay.toISOString().split('T')[0];
+    document.getElementById('endDate').value = today.toISOString().split('T')[0];
+
+    loadTransactions();
+  });
+
+  async function loadTransactions() {
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+
+    try {
+      // Load billing payments
+      const billingResponse = await fetch(`/api/billing?startDate=${startDate}&endDate=${endDate}&status=Paid`);
+      const billingResult = await billingResponse.json();
+
+      // Load walk-in payments
+      const walkinResponse = await fetch(`/api/walkin-invoices?startDate=${startDate}&endDate=${endDate}&status=Paid`);
+      const walkinResult = await walkinResponse.json();
+
+      transactions = [];
+
+      // Add billing transactions
+      if (billingResult.success && billingResult.data) {
+        billingResult.data.forEach(b => {
+          if (b.status === 'Paid' && b.paidDate) {
+            transactions.push({
+              date: b.paidDate,
+              invoiceNumber: b.invoiceNumber,
+              type: 'Billing',
+              customerName: b.client?.name || b.patient?.name || '-',
+              amount: b.totalAmount,
+              paymentMethod: b.paymentMethod || 'Cash',
+              reference: b.gcashReference || '',
+              receivedBy: b.paidBy?.name || '-',
+            });
+          }
+        });
+      }
+
+      // Add walk-in transactions
+      if (walkinResult.success && walkinResult.data) {
+        walkinResult.data.forEach(w => {
+          if (w.status === 'Paid' && w.paidDate) {
+            transactions.push({
+              date: w.paidDate,
+              invoiceNumber: w.invoiceNumber,
+              type: 'Walk-in',
+              customerName: w.customerName,
+              amount: w.totalAmount,
+              paymentMethod: w.paymentMethod || 'Cash',
+              reference: w.gcashReference || '',
+              receivedBy: w.paidBy?.name || '-',
+            });
+          }
+        });
+      }
+
+      // Sort by date descending
+      transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      renderTransactions();
+      calculateStats();
+      generateDailySummary();
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  }
+
+  function calculateStats() {
+    const methodFilter = document.getElementById('methodFilter').value;
+    const typeFilter = document.getElementById('typeFilter').value;
+
+    let filtered = filterData(transactions);
+
+    const total = filtered.reduce((sum, t) => sum + (t.amount || 0), 0);
+    const cash = filtered.filter(t => t.paymentMethod === 'Cash' || t.paymentMethod === 'Mixed').reduce((sum, t) => sum + (t.amount || 0), 0);
+    const gcash = filtered.filter(t => t.paymentMethod === 'GCash' || t.paymentMethod === 'Mixed').reduce((sum, t) => sum + (t.amount || 0), 0);
+
+    document.getElementById('totalCollections').textContent = '₱' + total.toFixed(2);
+    document.getElementById('cashTotal').textContent = '₱' + cash.toFixed(2);
+    document.getElementById('gcashTotal').textContent = '₱' + gcash.toFixed(2);
+    document.getElementById('transactionCount').textContent = filtered.length;
+  }
+
+  function filterData(data) {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const methodFilter = document.getElementById('methodFilter').value;
+    const typeFilter = document.getElementById('typeFilter').value;
+
+    return data.filter(t => {
+      const matchSearch = !search ||
+        t.invoiceNumber?.toLowerCase().includes(search) ||
+        t.customerName?.toLowerCase().includes(search);
+      const matchMethod = !methodFilter || t.paymentMethod === methodFilter;
+      const matchType = !typeFilter || t.type === typeFilter;
+      return matchSearch && matchMethod && matchType;
+    });
+  }
+
+  function renderTransactions() {
+    const tbody = document.getElementById('transactionsTable');
+    let filtered = filterData(transactions);
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="text-center">No transactions found</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(t => `
+      <tr>
+        <td>${new Date(t.date).toLocaleDateString()}</td>
+        <td><strong>${t.invoiceNumber}</strong></td>
+        <td><span class="badge ${t.type === 'Billing' ? 'badge-primary' : 'badge-info'}">${t.type}</span></td>
+        <td>${t.customerName}</td>
+        <td><strong>₱${t.amount?.toFixed(2) || '0.00'}</strong></td>
+        <td><span class="badge ${getMethodBadge(t.paymentMethod)}">${t.paymentMethod}</span></td>
+        <td>${t.reference || '-'}</td>
+        <td>${t.receivedBy}</td>
+      </tr>
+    `).join('');
+  }
+
+  function generateDailySummary() {
+    const tbody = document.getElementById('dailySummaryTable');
+    const summaryMap = {};
+
+    transactions.forEach(t => {
+      const dateKey = new Date(t.date).toLocaleDateString();
+      if (!summaryMap[dateKey]) {
+        summaryMap[dateKey] = { count: 0, cash: 0, gcash: 0, total: 0 };
+      }
+      summaryMap[dateKey].count++;
+      summaryMap[dateKey].total += t.amount || 0;
+      if (t.paymentMethod === 'Cash' || t.paymentMethod === 'Mixed') {
+        summaryMap[dateKey].cash += t.amount || 0;
+      }
+      if (t.paymentMethod === 'GCash' || t.paymentMethod === 'Mixed') {
+        summaryMap[dateKey].gcash += t.amount || 0;
+      }
+    });
+
+    const summaryArray = Object.entries(summaryMap).map(([date, data]) => ({
+      date,
+      ...data
+    })).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    if (summaryArray.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="text-center">No data available</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = summaryArray.map(s => `
+      <tr>
+        <td><strong>${s.date}</strong></td>
+        <td>${s.count}</td>
+        <td>₱${s.cash.toFixed(2)}</td>
+        <td>₱${s.gcash.toFixed(2)}</td>
+        <td><strong>₱${s.total.toFixed(2)}</strong></td>
+      </tr>
+    `).join('');
+  }
+
+  function getMethodBadge(method) {
+    switch(method) {
+      case 'Cash': return 'badge-success';
+      case 'GCash': return 'badge-primary';
+      case 'Mixed': return 'badge-info';
+      case 'Credit': return 'badge-warning';
+      default: return 'badge-secondary';
+    }
+  }
+
+  function filterTransactions() {
+    renderTransactions();
+    calculateStats();
+  }
+
+  function exportTransactions() {
+    let filtered = filterData(transactions);
+
+    if (filtered.length === 0) {
+      alert('No transactions to export');
+      return;
+    }
+
+    // Create CSV content
+    const headers = ['Date', 'Invoice #', 'Type', 'Customer', 'Amount', 'Payment Method', 'Reference', 'Received By'];
+    const rows = filtered.map(t => [
+      new Date(t.date).toLocaleDateString(),
+      t.invoiceNumber,
+      t.type,
+      t.customerName,
+      t.amount?.toFixed(2) || '0.00',
+      t.paymentMethod,
+      t.reference || '',
+      t.receivedBy
+    ]);
+
+    const csv = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+
+    // Download CSV
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `payment_transactions_${document.getElementById('startDate').value}_${document.getElementById('endDate').value}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  }
+</script>

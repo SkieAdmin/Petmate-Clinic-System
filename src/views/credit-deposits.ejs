@@ -1,0 +1,401 @@
+<div class="page-header">
+  <h2><i class="fas fa-wallet"></i> Credit Deposits</h2>
+  <p>Manage customer credit deposits and balances</p>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">Total Credit Balance</div>
+    <div class="stat-value" id="totalCredit">₱0.00</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Customers with Credit</div>
+    <div class="stat-value" id="customerCount">0</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="filter-bar" style="margin: 0; flex: 1;">
+      <input type="text" id="searchInput" placeholder="Search customer..." class="form-control" style="max-width: 250px;" onkeyup="filterDeposits()">
+      <select id="typeFilter" class="form-control" style="max-width: 150px;" onchange="filterDeposits()">
+        <option value="">All Types</option>
+        <option value="Deposit">Deposit</option>
+        <option value="Usage">Usage</option>
+        <option value="Refund">Refund</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="openDepositModal()">
+      <i class="fas fa-plus"></i> Add Deposit
+    </button>
+  </div>
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Customer</th>
+          <th>Type</th>
+          <th>Amount</th>
+          <th>Balance After</th>
+          <th>Reference</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody id="depositsTable">
+        <tr><td colspan="7" class="text-center"><div class="spinner"></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Customer Balances Card -->
+<div class="card mt-3">
+  <div class="card-header">
+    <h3 class="card-title">Customer Credit Balances</h3>
+  </div>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Customer</th>
+          <th>Contact</th>
+          <th>Credit Balance</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="balancesTable">
+        <tr><td colspan="4" class="text-center"><div class="spinner"></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Deposit Modal -->
+<div class="modal-overlay" id="depositModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="depositModalTitle">Add Credit Deposit</h3>
+      <button class="modal-close" onclick="closeDepositModal()">&times;</button>
+    </div>
+    <form id="depositForm">
+      <div class="form-group">
+        <label class="form-label">Customer *</label>
+        <select id="clientId" class="form-control" required>
+          <option value="">Select Customer</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Type *</label>
+          <select id="type" class="form-control" required>
+            <option value="Deposit">Deposit</option>
+            <option value="Usage">Usage</option>
+            <option value="Refund">Refund</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Amount *</label>
+          <input type="number" id="amount" class="form-control" required step="0.01" min="0.01" placeholder="0.00">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Payment Method</label>
+        <select id="paymentMethod" class="form-control">
+          <option value="">Select</option>
+          <option value="Cash">Cash</option>
+          <option value="GCash">GCash</option>
+          <option value="Bank Transfer">Bank Transfer</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Reference Number</label>
+        <input type="text" id="reference" class="form-control" placeholder="Transaction reference">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea id="notes" class="form-control textarea" rows="2"></textarea>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeDepositModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Use Credit Modal -->
+<div class="modal-overlay" id="useCreditModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Use Credit</h3>
+      <button class="modal-close" onclick="closeUseCreditModal()">&times;</button>
+    </div>
+    <form id="useCreditForm">
+      <input type="hidden" id="useClientId">
+
+      <div class="form-group">
+        <label class="form-label">Customer</label>
+        <p id="useCustomerName" class="text-lg"><strong>-</strong></p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Available Balance</label>
+        <h3 id="useAvailableBalance">₱0.00</h3>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Amount to Use *</label>
+        <input type="number" id="useAmount" class="form-control" required step="0.01" min="0.01" placeholder="0.00">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Purpose</label>
+        <textarea id="usePurpose" class="form-control textarea" rows="2" placeholder="e.g., Payment for consultation"></textarea>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeUseCreditModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Use Credit</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  let deposits = [];
+  let clients = [];
+  let balances = [];
+
+  document.addEventListener('DOMContentLoaded', function() {
+    loadClients();
+    loadDeposits();
+    loadBalances();
+    document.getElementById('depositForm').addEventListener('submit', handleDepositSubmit);
+    document.getElementById('useCreditForm').addEventListener('submit', handleUseCreditSubmit);
+  });
+
+  async function loadClients() {
+    try {
+      const response = await fetch('/api/clients');
+      const result = await response.json();
+      if (result.success) {
+        clients = result.data;
+        populateClientSelect();
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  }
+
+  function populateClientSelect() {
+    const select = document.getElementById('clientId');
+    select.innerHTML = '<option value="">Select Customer</option>';
+    clients.forEach(c => {
+      select.innerHTML += `<option value="${c.id}">${c.name} (${c.email || c.phone || 'No contact'})</option>`;
+    });
+  }
+
+  async function loadDeposits() {
+    try {
+      const response = await fetch('/api/credit-deposits');
+      const result = await response.json();
+      if (result.success) {
+        deposits = result.data;
+        renderDeposits();
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  }
+
+  async function loadBalances() {
+    try {
+      const response = await fetch('/api/credit-deposits/balances');
+      const result = await response.json();
+      if (result.success) {
+        balances = result.data;
+        renderBalances();
+        updateStats();
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  }
+
+  function updateStats() {
+    const total = balances.reduce((sum, b) => sum + (b.balance || 0), 0);
+    document.getElementById('totalCredit').textContent = '₱' + total.toFixed(2);
+    document.getElementById('customerCount').textContent = balances.filter(b => b.balance > 0).length;
+  }
+
+  function renderDeposits() {
+    const tbody = document.getElementById('depositsTable');
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const typeFilter = document.getElementById('typeFilter').value;
+
+    let filtered = deposits.filter(d => {
+      const matchSearch = !search || d.client?.name?.toLowerCase().includes(search);
+      const matchType = !typeFilter || d.type === typeFilter;
+      return matchSearch && matchType;
+    });
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center">No transactions found</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(d => `
+      <tr>
+        <td>${new Date(d.date).toLocaleDateString()}</td>
+        <td><strong>${d.client?.name || '-'}</strong></td>
+        <td><span class="badge ${getTypeBadge(d.type)}">${d.type}</span></td>
+        <td class="${d.type === 'Usage' ? 'text-danger' : 'text-success'}">
+          ${d.type === 'Usage' ? '-' : '+'}₱${d.amount.toFixed(2)}
+        </td>
+        <td><strong>₱${d.balanceAfter?.toFixed(2) || '0.00'}</strong></td>
+        <td>${d.reference || '-'}</td>
+        <td>${d.notes || '-'}</td>
+      </tr>
+    `).join('');
+  }
+
+  function renderBalances() {
+    const tbody = document.getElementById('balancesTable');
+
+    if (balances.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" class="text-center">No customer balances found</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = balances.map(b => `
+      <tr>
+        <td><strong>${b.clientName || '-'}</strong></td>
+        <td>${b.contact || '-'}</td>
+        <td><strong class="${b.balance > 0 ? 'text-success' : ''}">₱${b.balance?.toFixed(2) || '0.00'}</strong></td>
+        <td>
+          <div class="action-buttons">
+            ${b.balance > 0 ? `<button class="btn btn-sm btn-primary" onclick="openUseCreditModal(${b.clientId}, '${b.clientName}', ${b.balance})"><i class="fas fa-minus-circle"></i> Use</button>` : ''}
+            <button class="btn btn-sm btn-success" onclick="quickDeposit(${b.clientId})"><i class="fas fa-plus-circle"></i> Deposit</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function getTypeBadge(type) {
+    switch(type) {
+      case 'Deposit': return 'badge-success';
+      case 'Usage': return 'badge-warning';
+      case 'Refund': return 'badge-info';
+      default: return 'badge-secondary';
+    }
+  }
+
+  function filterDeposits() {
+    renderDeposits();
+  }
+
+  function openDepositModal() {
+    document.getElementById('depositModalTitle').textContent = 'Add Credit Deposit';
+    document.getElementById('depositForm').reset();
+    document.getElementById('type').value = 'Deposit';
+    document.getElementById('depositModal').classList.add('active');
+  }
+
+  function closeDepositModal() {
+    document.getElementById('depositModal').classList.remove('active');
+  }
+
+  function quickDeposit(clientId) {
+    document.getElementById('clientId').value = clientId;
+    document.getElementById('type').value = 'Deposit';
+    document.getElementById('depositModal').classList.add('active');
+  }
+
+  function openUseCreditModal(clientId, clientName, balance) {
+    document.getElementById('useClientId').value = clientId;
+    document.getElementById('useCustomerName').innerHTML = `<strong>${clientName}</strong>`;
+    document.getElementById('useAvailableBalance').textContent = '₱' + balance.toFixed(2);
+    document.getElementById('useAmount').max = balance;
+    document.getElementById('useCreditForm').reset();
+    document.getElementById('useClientId').value = clientId;
+    document.getElementById('useCreditModal').classList.add('active');
+  }
+
+  function closeUseCreditModal() {
+    document.getElementById('useCreditModal').classList.remove('active');
+  }
+
+  async function handleDepositSubmit(e) {
+    e.preventDefault();
+
+    const data = {
+      clientId: parseInt(document.getElementById('clientId').value),
+      type: document.getElementById('type').value,
+      amount: parseFloat(document.getElementById('amount').value),
+      paymentMethod: document.getElementById('paymentMethod').value,
+      reference: document.getElementById('reference').value,
+      notes: document.getElementById('notes').value,
+    };
+
+    try {
+      const response = await fetch('/api/credit-deposits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        alert('Transaction recorded successfully!');
+        closeDepositModal();
+        loadDeposits();
+        loadBalances();
+      } else {
+        alert(result.message || 'Failed to save');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred');
+    }
+  }
+
+  async function handleUseCreditSubmit(e) {
+    e.preventDefault();
+
+    const data = {
+      clientId: parseInt(document.getElementById('useClientId').value),
+      type: 'Usage',
+      amount: parseFloat(document.getElementById('useAmount').value),
+      notes: document.getElementById('usePurpose').value,
+    };
+
+    try {
+      const response = await fetch('/api/credit-deposits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        alert('Credit used successfully!');
+        closeUseCreditModal();
+        loadDeposits();
+        loadBalances();
+      } else {
+        alert(result.message || 'Failed to process');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred');
+    }
+  }
+</script>

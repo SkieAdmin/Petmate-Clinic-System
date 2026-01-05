@@ -7,7 +7,8 @@
       "Bash(npx prisma generate:*)",
       "Bash(npx prisma migrate:*)",
       "Bash(npx prisma db push)",
-      "Bash(npm run prisma:seed:*)"
+      "Bash(npm run prisma:seed:*)",
+      "Bash(node prisma/clear-data.js:*)"
     ],
     "deny": [],
     "ask": []

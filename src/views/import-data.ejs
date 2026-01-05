@@ -1,0 +1,417 @@
+<div class="page-header">
+  <h2><i class="fas fa-file-import"></i> Import Data</h2>
+  <p>Import data from Excel files into the system</p>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">Select Data Type to Import</h3>
+  </div>
+
+  <div class="import-options">
+    <div class="import-card" onclick="selectImportType('clients')">
+      <i class="fas fa-users"></i>
+      <h4>Customers</h4>
+      <p>Import customer information</p>
+    </div>
+    <div class="import-card" onclick="selectImportType('patients')">
+      <i class="fas fa-paw"></i>
+      <h4>Patients</h4>
+      <p>Import patient/pet records</p>
+    </div>
+    <div class="import-card" onclick="selectImportType('items')">
+      <i class="fas fa-box"></i>
+      <h4>Items</h4>
+      <p>Import inventory items</p>
+    </div>
+    <div class="import-card" onclick="selectImportType('services')">
+      <i class="fas fa-stethoscope"></i>
+      <h4>Services</h4>
+      <p>Import medical services</p>
+    </div>
+    <div class="import-card" onclick="selectImportType('suppliers')">
+      <i class="fas fa-truck"></i>
+      <h4>Suppliers</h4>
+      <p>Import supplier information</p>
+    </div>
+    <div class="import-card" onclick="selectImportType('employees')">
+      <i class="fas fa-id-badge"></i>
+      <h4>Employees</h4>
+      <p>Import employee records</p>
+    </div>
+  </div>
+</div>
+
+<div class="card mt-3" id="importSection" style="display: none;">
+  <div class="card-header">
+    <h3 class="card-title">Import <span id="importTypeName">Data</span></h3>
+  </div>
+
+  <div class="import-instructions">
+    <h4><i class="fas fa-info-circle"></i> Instructions</h4>
+    <ol>
+      <li>Download the template file for the correct format</li>
+      <li>Fill in your data following the template columns</li>
+      <li>Save as .xlsx or .csv file</li>
+      <li>Upload the file using the form below</li>
+    </ol>
+
+    <button class="btn btn-secondary mb-3" onclick="downloadTemplate()">
+      <i class="fas fa-download"></i> Download Template
+    </button>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Select File *</label>
+    <input type="file" id="importFile" class="form-control" accept=".xlsx,.xls,.csv" onchange="previewFile()">
+  </div>
+
+  <div id="previewSection" style="display: none;">
+    <h4>Preview (First 5 rows)</h4>
+    <div class="table-container">
+      <table id="previewTable">
+        <thead id="previewHead"></thead>
+        <tbody id="previewBody"></tbody>
+      </table>
+    </div>
+
+    <div class="import-summary mt-3">
+      <p><strong>Total rows to import:</strong> <span id="rowCount">0</span></p>
+    </div>
+
+    <div class="form-group mt-3">
+      <label>
+        <input type="checkbox" id="skipDuplicates" checked> Skip duplicate entries
+      </label>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="clearImport()">Cancel</button>
+      <button class="btn btn-primary" onclick="processImport()"><i class="fas fa-upload"></i> Import Data</button>
+    </div>
+  </div>
+</div>
+
+<div class="card mt-3" id="resultSection" style="display: none;">
+  <div class="card-header">
+    <h3 class="card-title">Import Results</h3>
+  </div>
+
+  <div class="import-results">
+    <div class="result-stat success">
+      <i class="fas fa-check-circle"></i>
+      <span id="successCount">0</span> Imported
+    </div>
+    <div class="result-stat warning">
+      <i class="fas fa-exclamation-circle"></i>
+      <span id="skipCount">0</span> Skipped
+    </div>
+    <div class="result-stat error">
+      <i class="fas fa-times-circle"></i>
+      <span id="errorCount">0</span> Errors
+    </div>
+  </div>
+
+  <div id="errorList" class="mt-3" style="display: none;">
+    <h4>Errors</h4>
+    <ul id="errorMessages"></ul>
+  </div>
+
+  <button class="btn btn-primary mt-3" onclick="resetImport()">Import More</button>
+</div>
+
+<style>
+  .import-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .import-card {
+    background: var(--bg-light);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .import-card:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+  }
+
+  .import-card.selected {
+    border-color: var(--primary-color);
+    background: rgba(34, 139, 34, 0.1);
+  }
+
+  .import-card i {
+    font-size: 2.5rem;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+  }
+
+  .import-card h4 {
+    margin: 0.5rem 0;
+    color: var(--text-dark);
+  }
+
+  .import-card p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .import-instructions {
+    background: var(--bg-light);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+  }
+
+  .import-instructions ol {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+  }
+
+  .import-results {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+    padding: 1.5rem;
+  }
+
+  .result-stat {
+    text-align: center;
+    padding: 1rem;
+  }
+
+  .result-stat i {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  .result-stat span {
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
+
+  .result-stat.success i { color: #28a745; }
+  .result-stat.warning i { color: #ffc107; }
+  .result-stat.error i { color: #dc3545; }
+
+  #errorList {
+    background: #fff5f5;
+    border: 1px solid #dc3545;
+    border-radius: 8px;
+    padding: 1rem;
+  }
+
+  #errorList ul {
+    margin: 0;
+    padding-left: 1.5rem;
+    color: #dc3545;
+  }
+</style>
+
+<script>
+  let selectedType = null;
+  let parsedData = [];
+
+  const templateColumns = {
+    clients: ['name', 'email', 'phone', 'address'],
+    patients: ['name', 'species', 'breed', 'birthDate', 'gender', 'color', 'weight', 'clientEmail'],
+    items: ['name', 'sku', 'category', 'price', 'cost', 'quantity', 'unit', 'minStock', 'description'],
+    services: ['name', 'category', 'description', 'price', 'duration'],
+    suppliers: ['name', 'contactPerson', 'email', 'phone', 'address'],
+    employees: ['name', 'position', 'department', 'email', 'phone', 'hireDate', 'salary'],
+  };
+
+  const typeNames = {
+    clients: 'Customers',
+    patients: 'Patients',
+    items: 'Inventory Items',
+    services: 'Services',
+    suppliers: 'Suppliers',
+    employees: 'Employees',
+  };
+
+  function selectImportType(type) {
+    selectedType = type;
+
+    // Update UI
+    document.querySelectorAll('.import-card').forEach(card => card.classList.remove('selected'));
+    event.currentTarget.classList.add('selected');
+
+    document.getElementById('importTypeName').textContent = typeNames[type];
+    document.getElementById('importSection').style.display = 'block';
+    document.getElementById('previewSection').style.display = 'none';
+    document.getElementById('resultSection').style.display = 'none';
+    document.getElementById('importFile').value = '';
+    parsedData = [];
+  }
+
+  function downloadTemplate() {
+    if (!selectedType) {
+      alert('Please select a data type first');
+      return;
+    }
+
+    const columns = templateColumns[selectedType];
+    const csv = columns.join(',') + '\n' + columns.map(() => '').join(',');
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${selectedType}_template.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  }
+
+  function previewFile() {
+    const fileInput = document.getElementById('importFile');
+    const file = fileInput.files[0];
+
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    if (file.name.endsWith('.csv')) {
+      reader.onload = function(e) {
+        const text = e.target.result;
+        parseCSV(text);
+      };
+      reader.readAsText(file);
+    } else {
+      // For xlsx files, we'll need to handle on the server
+      alert('Excel files will be processed on import. Preview is available for CSV files.');
+      document.getElementById('previewSection').style.display = 'block';
+      document.getElementById('previewHead').innerHTML = '<tr><td>Excel file selected - preview not available</td></tr>';
+      document.getElementById('previewBody').innerHTML = '';
+      document.getElementById('rowCount').textContent = 'Unknown';
+    }
+  }
+
+  function parseCSV(text) {
+    const lines = text.split('\n').filter(line => line.trim());
+    if (lines.length < 2) {
+      alert('File must have at least a header row and one data row');
+      return;
+    }
+
+    const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+    parsedData = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
+      const row = {};
+      headers.forEach((header, index) => {
+        row[header] = values[index] || '';
+      });
+      parsedData.push(row);
+    }
+
+    // Render preview
+    const thead = document.getElementById('previewHead');
+    const tbody = document.getElementById('previewBody');
+
+    thead.innerHTML = '<tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
+
+    tbody.innerHTML = parsedData.slice(0, 5).map(row => {
+      return '<tr>' + headers.map(h => `<td>${row[h] || ''}</td>`).join('') + '</tr>';
+    }).join('');
+
+    document.getElementById('rowCount').textContent = parsedData.length;
+    document.getElementById('previewSection').style.display = 'block';
+  }
+
+  function clearImport() {
+    document.getElementById('importFile').value = '';
+    document.getElementById('previewSection').style.display = 'none';
+    parsedData = [];
+  }
+
+  async function processImport() {
+    if (!selectedType) {
+      alert('Please select a data type');
+      return;
+    }
+
+    const fileInput = document.getElementById('importFile');
+    const file = fileInput.files[0];
+
+    if (!file && parsedData.length === 0) {
+      alert('Please select a file');
+      return;
+    }
+
+    const skipDuplicates = document.getElementById('skipDuplicates').checked;
+
+    try {
+      let response;
+
+      if (file.name.endsWith('.csv') && parsedData.length > 0) {
+        // Send parsed data directly
+        response = await fetch(`/api/import/${selectedType}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ data: parsedData, skipDuplicates }),
+        });
+      } else {
+        // Send file for server-side processing
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('skipDuplicates', skipDuplicates);
+
+        response = await fetch(`/api/import/${selectedType}`, {
+          method: 'POST',
+          body: formData,
+        });
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        showResults(result);
+      } else {
+        alert(result.message || 'Import failed');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred during import');
+    }
+  }
+
+  function showResults(result) {
+    document.getElementById('importSection').style.display = 'none';
+    document.getElementById('resultSection').style.display = 'block';
+
+    document.getElementById('successCount').textContent = result.imported || 0;
+    document.getElementById('skipCount').textContent = result.skipped || 0;
+    document.getElementById('errorCount').textContent = result.errors?.length || 0;
+
+    if (result.errors && result.errors.length > 0) {
+      document.getElementById('errorList').style.display = 'block';
+      document.getElementById('errorMessages').innerHTML = result.errors.map(e =>
+        `<li>Row ${e.row}: ${e.message}</li>`
+      ).join('');
+    } else {
+      document.getElementById('errorList').style.display = 'none';
+    }
+  }
+
+  function resetImport() {
+    document.getElementById('resultSection').style.display = 'none';
+    document.getElementById('importSection').style.display = 'block';
+    document.getElementById('previewSection').style.display = 'none';
+    document.getElementById('importFile').value = '';
+    parsedData = [];
+  }
+</script>

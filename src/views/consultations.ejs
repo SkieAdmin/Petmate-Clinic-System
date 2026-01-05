@@ -1,0 +1,413 @@
+<div class="page-header">
+  <h2><i class="fas fa-stethoscope"></i> Consultations</h2>
+  <p>Manage patient consultations, diagnosis, treatments, and follow-ups</p>
+</div>
+
+<!-- Stats Cards -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">Today's Consultations</div>
+    <div class="stat-value" id="todayConsultations">0</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Ongoing</div>
+    <div class="stat-value" id="ongoingConsultations">0</div>
+  </div>
+  <div class="stat-card warning">
+    <div class="stat-label">For Follow-up</div>
+    <div class="stat-value" id="followUpConsultations">0</div>
+  </div>
+  <div class="stat-card success">
+    <div class="stat-label">Completed</div>
+    <div class="stat-value" id="completedConsultations">0</div>
+  </div>
+</div>
+
+<!-- Action Bar -->
+<div class="card">
+  <div class="card-header">
+    <div class="search-bar" style="margin: 0; flex: 1;">
+      <input type="text" id="searchInput" placeholder="Search patients, diagnosis..." class="form-control">
+      <select id="statusFilter" class="form-control" style="max-width: 150px;">
+        <option value="">All Status</option>
+        <option value="Ongoing">Ongoing</option>
+        <option value="Completed">Completed</option>
+        <option value="For Follow-up">For Follow-up</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="openNewConsultation()">
+      <i class="fas fa-plus"></i> New Consultation
+    </button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('all')">All Consultations</button>
+    <button class="tab" onclick="switchTab('today')">Today</button>
+    <button class="tab" onclick="switchTab('followups')">Upcoming Follow-ups</button>
+  </div>
+
+  <!-- Consultations List -->
+  <div id="consultationsList">
+    <div class="spinner"></div>
+  </div>
+</div>
+
+<!-- New Consultation Modal -->
+<div class="modal-overlay" id="consultationModal">
+  <div class="modal" style="max-width: 800px;">
+    <div class="modal-header">
+      <h3><i class="fas fa-stethoscope"></i> <span id="modalTitle">New Consultation</span></h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <form id="consultationForm">
+      <input type="hidden" id="consultationId">
+
+      <!-- Patient Selection -->
+      <div class="form-group">
+        <label class="form-label">Patient *</label>
+        <select id="patientId" class="form-control" required>
+          <option value="">Select Patient</option>
+        </select>
+      </div>
+
+      <!-- Patient Info Display -->
+      <div id="patientInfoDisplay" class="patient-info" style="display: none;">
+        <div class="patient-avatar"><i class="fas fa-paw"></i></div>
+        <div class="patient-details">
+          <h4 id="displayPatientName">-</h4>
+          <p id="displayPatientInfo">-</p>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Consultation Date</label>
+          <input type="datetime-local" id="consultationDate" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select id="status" class="form-control">
+            <option value="Ongoing">Ongoing</option>
+            <option value="Completed">Completed</option>
+            <option value="For Follow-up">For Follow-up</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Weight (kg)</label>
+          <input type="number" id="weight" class="form-control" step="0.1" placeholder="Patient weight">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Temperature (°C)</label>
+          <input type="number" id="temperature" class="form-control" step="0.1" placeholder="Temperature">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Diagnosis</label>
+        <textarea id="diagnosis" class="form-control textarea" rows="3" placeholder="Enter diagnosis details..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">TX (Treatment)</label>
+        <textarea id="treatment" class="form-control textarea" rows="3" placeholder="Enter treatment details..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">RX (Prescription)</label>
+        <textarea id="prescription" class="form-control textarea" rows="3" placeholder="Enter prescription details..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Additional Notes</label>
+        <textarea id="notes" class="form-control textarea" rows="2" placeholder="Any additional notes..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Next Check-Up Date</label>
+        <input type="datetime-local" id="nextCheckUpDate" class="form-control">
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-save"></i> Save Consultation
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  let consultations = [];
+  let patients = [];
+  let currentTab = 'all';
+
+  // Initialize
+  document.addEventListener('DOMContentLoaded', function() {
+    loadPatients();
+    loadStats();
+    loadConsultations();
+
+    document.getElementById('consultationForm').addEventListener('submit', handleSubmit);
+    document.getElementById('searchInput').addEventListener('input', filterConsultations);
+    document.getElementById('statusFilter').addEventListener('change', filterConsultations);
+    document.getElementById('patientId').addEventListener('change', displayPatientInfo);
+  });
+
+  async function loadStats() {
+    try {
+      const response = await fetch('/api/consultations/stats');
+      const result = await response.json();
+      if (result.success) {
+        document.getElementById('todayConsultations').textContent = result.data.today;
+        document.getElementById('ongoingConsultations').textContent = result.data.ongoing;
+        document.getElementById('followUpConsultations').textContent = result.data.forFollowUp;
+        document.getElementById('completedConsultations').textContent = result.data.completed;
+      }
+    } catch (error) {
+      console.error('Error loading stats:', error);
+    }
+  }
+
+  async function loadPatients() {
+    try {
+      const response = await fetch('/api/patients');
+      const result = await response.json();
+      if (result.success) {
+        patients = result.data;
+        const select = document.getElementById('patientId');
+        select.innerHTML = '<option value="">Select Patient</option>';
+        patients.forEach(patient => {
+          select.innerHTML += `<option value="${patient.id}">${patient.name} (${patient.species}) - Owner: ${patient.client?.name || 'Unknown'}</option>`;
+        });
+      }
+    } catch (error) {
+      console.error('Error loading patients:', error);
+    }
+  }
+
+  async function loadConsultations() {
+    try {
+      let url = '/api/consultations';
+      if (currentTab === 'today') url = '/api/consultations/today';
+      else if (currentTab === 'followups') url = '/api/consultations/follow-ups';
+
+      const response = await fetch(url);
+      const result = await response.json();
+      if (result.success) {
+        consultations = result.data;
+        renderConsultations();
+      }
+    } catch (error) {
+      console.error('Error loading consultations:', error);
+      document.getElementById('consultationsList').innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h3>Error loading consultations</h3></div>';
+    }
+  }
+
+  function renderConsultations() {
+    const container = document.getElementById('consultationsList');
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+
+    let filtered = consultations.filter(c => {
+      const matchSearch = !search ||
+        c.patient?.name?.toLowerCase().includes(search) ||
+        c.patient?.client?.name?.toLowerCase().includes(search) ||
+        c.diagnosis?.toLowerCase().includes(search);
+      const matchStatus = !statusFilter || c.status === statusFilter;
+      return matchSearch && matchStatus;
+    });
+
+    if (filtered.length === 0) {
+      container.innerHTML = '<div class="empty-state"><i class="fas fa-stethoscope"></i><h3>No consultations found</h3><p>Create a new consultation to get started</p></div>';
+      return;
+    }
+
+    container.innerHTML = filtered.map(c => `
+      <div class="card consultation-card ${c.status.toLowerCase().replace(' ', '-')}">
+        <div class="flex-between">
+          <div class="patient-info">
+            <div class="patient-avatar"><i class="fas fa-paw"></i></div>
+            <div class="patient-details">
+              <h4>${c.patient?.name || 'Unknown'}</h4>
+              <p>${c.patient?.species || ''} ${c.patient?.breed ? '- ' + c.patient.breed : ''} | Owner: ${c.patient?.client?.name || 'Unknown'}</p>
+            </div>
+          </div>
+          <div>
+            <span class="badge ${c.status === 'Completed' ? 'badge-success' : c.status === 'For Follow-up' ? 'badge-warning' : 'badge-info'}">${c.status}</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <strong>Date:</strong> ${new Date(c.consultationDate).toLocaleString()}
+          </div>
+          <div>
+            <strong>Doctor:</strong> ${c.doctor?.fullName || 'Unknown'}
+          </div>
+          ${c.nextCheckUpDate ? `<div><strong>Next Check-up:</strong> ${new Date(c.nextCheckUpDate).toLocaleDateString()}</div>` : ''}
+        </div>
+        ${c.diagnosis ? `<div class="mt-2"><strong>Diagnosis:</strong> ${c.diagnosis.substring(0, 150)}${c.diagnosis.length > 150 ? '...' : ''}</div>` : ''}
+        <div class="action-buttons mt-2">
+          <button class="btn btn-sm btn-secondary" onclick="viewConsultation(${c.id})"><i class="fas fa-eye"></i> View</button>
+          <button class="btn btn-sm btn-primary" onclick="editConsultation(${c.id})"><i class="fas fa-edit"></i> Edit</button>
+          ${c.status !== 'Completed' ? `<button class="btn btn-sm btn-success" onclick="completeConsultation(${c.id})"><i class="fas fa-check"></i> Complete</button>` : ''}
+          <button class="btn btn-sm btn-danger" onclick="deleteConsultation(${c.id})"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function filterConsultations() {
+    renderConsultations();
+  }
+
+  function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    loadConsultations();
+  }
+
+  function displayPatientInfo() {
+    const patientId = document.getElementById('patientId').value;
+    const display = document.getElementById('patientInfoDisplay');
+
+    if (patientId) {
+      const patient = patients.find(p => p.id == patientId);
+      if (patient) {
+        document.getElementById('displayPatientName').textContent = patient.name;
+        document.getElementById('displayPatientInfo').textContent = `${patient.species} ${patient.breed ? '- ' + patient.breed : ''} | Owner: ${patient.client?.name || 'Unknown'} | Phone: ${patient.client?.phone || 'N/A'}`;
+        display.style.display = 'flex';
+      }
+    } else {
+      display.style.display = 'none';
+    }
+  }
+
+  function openNewConsultation() {
+    document.getElementById('modalTitle').textContent = 'New Consultation';
+    document.getElementById('consultationForm').reset();
+    document.getElementById('consultationId').value = '';
+    document.getElementById('patientInfoDisplay').style.display = 'none';
+    document.getElementById('consultationDate').value = new Date().toISOString().slice(0, 16);
+    document.getElementById('consultationModal').classList.add('active');
+  }
+
+  async function editConsultation(id) {
+    const consultation = consultations.find(c => c.id === id);
+    if (!consultation) return;
+
+    document.getElementById('modalTitle').textContent = 'Edit Consultation';
+    document.getElementById('consultationId').value = id;
+    document.getElementById('patientId').value = consultation.patientId;
+    document.getElementById('consultationDate').value = consultation.consultationDate?.slice(0, 16);
+    document.getElementById('status').value = consultation.status;
+    document.getElementById('weight').value = consultation.weight || '';
+    document.getElementById('temperature').value = consultation.temperature || '';
+    document.getElementById('diagnosis').value = consultation.diagnosis || '';
+    document.getElementById('treatment').value = consultation.treatment || '';
+    document.getElementById('prescription').value = consultation.prescription || '';
+    document.getElementById('notes').value = consultation.notes || '';
+    document.getElementById('nextCheckUpDate').value = consultation.nextCheckUpDate?.slice(0, 16) || '';
+
+    displayPatientInfo();
+    document.getElementById('consultationModal').classList.add('active');
+  }
+
+  function viewConsultation(id) {
+    window.location.href = `/consultations/${id}`;
+  }
+
+  function closeModal() {
+    document.getElementById('consultationModal').classList.remove('active');
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+
+    const id = document.getElementById('consultationId').value;
+    const data = {
+      patientId: document.getElementById('patientId').value,
+      consultationDate: document.getElementById('consultationDate').value,
+      status: document.getElementById('status').value,
+      weight: document.getElementById('weight').value,
+      temperature: document.getElementById('temperature').value,
+      diagnosis: document.getElementById('diagnosis').value,
+      treatment: document.getElementById('treatment').value,
+      prescription: document.getElementById('prescription').value,
+      notes: document.getElementById('notes').value,
+      nextCheckUpDate: document.getElementById('nextCheckUpDate').value,
+    };
+
+    try {
+      const url = id ? `/api/consultations/${id}` : '/api/consultations';
+      const method = id ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        alert(result.message);
+        closeModal();
+        loadStats();
+        loadConsultations();
+      } else {
+        alert(result.message || 'Failed to save consultation');
+      }
+    } catch (error) {
+      console.error('Error saving consultation:', error);
+      alert('An error occurred while saving');
+    }
+  }
+
+  async function completeConsultation(id) {
+    if (!confirm('Mark this consultation as completed?')) return;
+
+    try {
+      const response = await fetch(`/api/consultations/${id}/complete`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        loadStats();
+        loadConsultations();
+      } else {
+        alert(result.message || 'Failed to complete consultation');
+      }
+    } catch (error) {
+      console.error('Error completing consultation:', error);
+      alert('An error occurred');
+    }
+  }
+
+  async function deleteConsultation(id) {
+    if (!confirm('Are you sure you want to delete this consultation?')) return;
+
+    try {
+      const response = await fetch(`/api/consultations/${id}`, {
+        method: 'DELETE',
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        loadStats();
+        loadConsultations();
+      } else {
+        alert(result.message || 'Failed to delete consultation');
+      }
+    } catch (error) {
+      console.error('Error deleting consultation:', error);
+      alert('An error occurred');
+    }
+  }
+</script>

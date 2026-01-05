@@ -58,6 +58,17 @@ const treatmentsRouter = require('./routes/treatments.routes');
 const prescriptionsRouter = require('./routes/prescriptions.routes');
 const auditLogsRouter = require('./routes/auditLog.routes');
 const customerRouter = require('./routes/customer.routes');
+const consultationsRouter = require('./routes/consultations.routes');
+const suppliersRouter = require('./routes/suppliers.routes');
+const purchaseOrdersRouter = require('./routes/purchaseOrders.routes');
+const receivingReportsRouter = require('./routes/receivingReports.routes');
+const expensesRouter = require('./routes/expenses.routes');
+const servicesRouter = require('./routes/services.routes');
+const employeesRouter = require('./routes/employees.routes');
+const admissionsRouter = require('./routes/admissions.routes');
+const systemRouter = require('./routes/system.routes');
+const walkInInvoicesRouter = require('./routes/walkInInvoices.routes');
+const creditDepositsRouter = require('./routes/creditDeposits.routes');
 
 // Public routes (no authentication required)
 app.use('/api/auth', authRouter);
@@ -116,6 +127,17 @@ app.use('/api/reports', authenticate, requireAdmin, reportsRouter);
 app.use('/api/treatments', authenticate, treatmentsRouter);
 app.use('/api/prescriptions', authenticate, prescriptionsRouter);
 app.use('/api/audit-logs', authenticate, auditLogsRouter);
+app.use('/api/consultations', authenticate, consultationsRouter);
+app.use('/api/suppliers', authenticate, requireAdmin, suppliersRouter);
+app.use('/api/purchase-orders', authenticate, requireAdmin, purchaseOrdersRouter);
+app.use('/api/receiving-reports', authenticate, requireAdmin, receivingReportsRouter);
+app.use('/api/expenses', authenticate, requireAdmin, expensesRouter);
+app.use('/api/services', authenticate, servicesRouter);
+app.use('/api/employees', authenticate, requireAdmin, employeesRouter);
+app.use('/api/admissions', authenticate, admissionsRouter);
+app.use('/api/system', authenticate, requireAdmin, systemRouter);
+app.use('/api/walkin-invoices', authenticate, walkInInvoicesRouter);
+app.use('/api/credit-deposits', authenticate, requireAdmin, creditDepositsRouter);
 
 // Public web routes
 app.get('/', (req, res) => {
@@ -200,6 +222,80 @@ app.get('/reports', authenticate, requireAdmin, (req, res) => {
 
 app.get('/audit-logs', authenticate, (req, res) => {
   res.render('audit-logs', { title: 'Audit Logs', user: req.user });
+});
+
+// Doctor consultation routes
+app.get('/consultations', authenticate, (req, res) => {
+  res.render('consultations', { title: 'Consultations', user: req.user });
+});
+
+app.get('/consultation-form', authenticate, (req, res) => {
+  res.render('consultation-form', { title: 'Consultation Form', user: req.user });
+});
+
+app.get('/consultation-detail', authenticate, (req, res) => {
+  res.render('consultation-detail', { title: 'Consultation Details', user: req.user });
+});
+
+// Admin module routes
+app.get('/calendar', authenticate, (req, res) => {
+  res.render('calendar', { title: 'Clinic Calendar', user: req.user });
+});
+
+app.get('/daily-schedule', authenticate, (req, res) => {
+  res.render('daily-schedule', { title: 'Daily Schedule', user: req.user });
+});
+
+app.get('/admissions', authenticate, (req, res) => {
+  res.render('admissions', { title: 'Admissions', user: req.user });
+});
+
+// Inventory module routes
+app.get('/suppliers', authenticate, requireAdmin, (req, res) => {
+  res.render('suppliers', { title: 'Suppliers', user: req.user });
+});
+
+app.get('/purchase-orders', authenticate, requireAdmin, (req, res) => {
+  res.render('purchase-orders', { title: 'Purchase Orders', user: req.user });
+});
+
+app.get('/receiving-reports', authenticate, requireAdmin, (req, res) => {
+  res.render('receiving-reports', { title: 'Receiving Reports', user: req.user });
+});
+
+app.get('/services', authenticate, (req, res) => {
+  res.render('services', { title: 'Services', user: req.user });
+});
+
+// Sales module routes
+app.get('/walkin-invoices', authenticate, (req, res) => {
+  res.render('walkin-invoices', { title: 'Walk-in Invoices', user: req.user });
+});
+
+app.get('/expenses', authenticate, requireAdmin, (req, res) => {
+  res.render('expenses', { title: 'Expenses', user: req.user });
+});
+
+app.get('/credit-deposits', authenticate, requireAdmin, (req, res) => {
+  res.render('credit-deposits', { title: 'Credit Deposits', user: req.user });
+});
+
+app.get('/payment-transactions', authenticate, requireAdmin, (req, res) => {
+  res.render('payment-transactions', { title: 'Payment Transactions', user: req.user });
+});
+
+// HR module routes
+app.get('/employees', authenticate, requireAdmin, (req, res) => {
+  res.render('employees', { title: 'Employees', user: req.user });
+});
+
+// System module routes
+app.get('/company-info', authenticate, requireAdmin, (req, res) => {
+  res.render('company-info', { title: 'Company Information', user: req.user });
+});
+
+app.get('/import-data', authenticate, requireAdmin, (req, res) => {
+  res.render('import-data', { title: 'Import Data', user: req.user });
 });
 
 // Health check route

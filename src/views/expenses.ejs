@@ -1,0 +1,295 @@
+<div class="page-header">
+  <h2><i class="fas fa-receipt"></i> Expenses</h2>
+  <p>Track and manage clinic expenses</p>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">Total Expenses (This Month)</div>
+    <div class="stat-value" id="totalExpenses">₱0.00</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="filter-bar" style="margin: 0; flex: 1;">
+      <div class="filter-group">
+        <label>From:</label>
+        <input type="date" id="startDate" class="form-control" onchange="loadExpenses()">
+      </div>
+      <div class="filter-group">
+        <label>To:</label>
+        <input type="date" id="endDate" class="form-control" onchange="loadExpenses()">
+      </div>
+      <div class="filter-group">
+        <label>Category:</label>
+        <select id="categoryFilter" class="form-control" onchange="filterExpenses()">
+          <option value="">All</option>
+          <option value="Utilities">Utilities</option>
+          <option value="Supplies">Supplies</option>
+          <option value="Rent">Rent</option>
+          <option value="Salaries">Salaries</option>
+          <option value="Equipment">Equipment</option>
+          <option value="Maintenance">Maintenance</option>
+          <option value="Marketing">Marketing</option>
+          <option value="Transportation">Transportation</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="openExpenseModal()">
+      <i class="fas fa-plus"></i> Add Expense
+    </button>
+  </div>
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Expense #</th>
+          <th>Date</th>
+          <th>Category</th>
+          <th>Description</th>
+          <th>Amount</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="expensesTable">
+        <tr><td colspan="6" class="text-center"><div class="spinner"></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Expense Modal -->
+<div class="modal-overlay" id="expenseModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="expenseModalTitle">Add Expense</h3>
+      <button class="modal-close" onclick="closeExpenseModal()">&times;</button>
+    </div>
+    <form id="expenseForm">
+      <input type="hidden" id="expenseId">
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Date *</label>
+          <input type="date" id="date" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Category *</label>
+          <select id="category" class="form-control" required>
+            <option value="">Select Category</option>
+            <option value="Utilities">Utilities</option>
+            <option value="Supplies">Supplies</option>
+            <option value="Rent">Rent</option>
+            <option value="Salaries">Salaries</option>
+            <option value="Equipment">Equipment</option>
+            <option value="Maintenance">Maintenance</option>
+            <option value="Marketing">Marketing</option>
+            <option value="Transportation">Transportation</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Description *</label>
+        <textarea id="description" class="form-control textarea" rows="2" required placeholder="Expense description..."></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Amount *</label>
+          <input type="number" id="amount" class="form-control" required step="0.01" placeholder="0.00">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Payment Method</label>
+          <select id="paymentMethod" class="form-control">
+            <option value="">Select</option>
+            <option value="Cash">Cash</option>
+            <option value="GCash">GCash</option>
+            <option value="Bank Transfer">Bank Transfer</option>
+            <option value="Check">Check</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Reference/Receipt #</label>
+        <input type="text" id="reference" class="form-control" placeholder="Receipt or reference number">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea id="notes" class="form-control textarea" rows="2"></textarea>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeExpenseModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  let expenses = [];
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    document.getElementById('startDate').value = firstDay.toISOString().split('T')[0];
+    document.getElementById('endDate').value = today.toISOString().split('T')[0];
+
+    loadExpenses();
+    document.getElementById('expenseForm').addEventListener('submit', handleSubmit);
+  });
+
+  async function loadExpenses() {
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+
+    try {
+      const response = await fetch(`/api/expenses?startDate=${startDate}&endDate=${endDate}`);
+      const result = await response.json();
+      if (result.success) {
+        expenses = result.data;
+        renderExpenses();
+        calculateTotal();
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  }
+
+  function calculateTotal() {
+    const categoryFilter = document.getElementById('categoryFilter').value;
+    let filtered = expenses;
+    if (categoryFilter) {
+      filtered = expenses.filter(e => e.category === categoryFilter);
+    }
+    const total = filtered.reduce((sum, e) => sum + e.amount, 0);
+    document.getElementById('totalExpenses').textContent = '₱' + total.toFixed(2);
+  }
+
+  function renderExpenses() {
+    const tbody = document.getElementById('expensesTable');
+    const categoryFilter = document.getElementById('categoryFilter').value;
+
+    let filtered = expenses;
+    if (categoryFilter) {
+      filtered = expenses.filter(e => e.category === categoryFilter);
+    }
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center">No expenses found</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(e => `
+      <tr>
+        <td><strong>${e.expenseNumber}</strong></td>
+        <td>${new Date(e.date).toLocaleDateString()}</td>
+        <td><span class="badge badge-secondary">${e.category}</span></td>
+        <td>${e.description}</td>
+        <td><strong>₱${e.amount.toFixed(2)}</strong></td>
+        <td>
+          <div class="action-buttons">
+            <button class="btn btn-sm btn-primary" onclick="editExpense(${e.id})"><i class="fas fa-edit"></i></button>
+            <button class="btn btn-sm btn-danger" onclick="deleteExpense(${e.id})"><i class="fas fa-trash"></i></button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function filterExpenses() {
+    renderExpenses();
+    calculateTotal();
+  }
+
+  function openExpenseModal() {
+    document.getElementById('expenseModalTitle').textContent = 'Add Expense';
+    document.getElementById('expenseForm').reset();
+    document.getElementById('expenseId').value = '';
+    document.getElementById('date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('expenseModal').classList.add('active');
+  }
+
+  function closeExpenseModal() {
+    document.getElementById('expenseModal').classList.remove('active');
+  }
+
+  function editExpense(id) {
+    const expense = expenses.find(e => e.id === id);
+    if (!expense) return;
+
+    document.getElementById('expenseModalTitle').textContent = 'Edit Expense';
+    document.getElementById('expenseId').value = id;
+    document.getElementById('date').value = expense.date?.split('T')[0];
+    document.getElementById('category').value = expense.category;
+    document.getElementById('description').value = expense.description;
+    document.getElementById('amount').value = expense.amount;
+    document.getElementById('paymentMethod').value = expense.paymentMethod || '';
+    document.getElementById('reference').value = expense.reference || '';
+    document.getElementById('notes').value = expense.notes || '';
+
+    document.getElementById('expenseModal').classList.add('active');
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+
+    const id = document.getElementById('expenseId').value;
+    const data = {
+      date: document.getElementById('date').value,
+      category: document.getElementById('category').value,
+      description: document.getElementById('description').value,
+      amount: document.getElementById('amount').value,
+      paymentMethod: document.getElementById('paymentMethod').value,
+      reference: document.getElementById('reference').value,
+      notes: document.getElementById('notes').value,
+    };
+
+    try {
+      const url = id ? `/api/expenses/${id}` : '/api/expenses';
+      const method = id ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        alert(result.message);
+        closeExpenseModal();
+        loadExpenses();
+      } else {
+        alert(result.message || 'Failed to save');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred');
+    }
+  }
+
+  async function deleteExpense(id) {
+    if (!confirm('Delete this expense?')) return;
+
+    try {
+      const response = await fetch(`/api/expenses/${id}`, { method: 'DELETE' });
+      const result = await response.json();
+      if (result.success) {
+        loadExpenses();
+      } else {
+        alert(result.message || 'Failed to delete');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred');
+    }
+  }
+</script>

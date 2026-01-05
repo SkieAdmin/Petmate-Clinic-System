@@ -1,0 +1,230 @@
+<div class="page-header">
+  <h2><i class="fas fa-truck"></i> Suppliers</h2>
+  <p>Manage suppliers and vendor information</p>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="search-bar" style="margin: 0; flex: 1;">
+      <input type="text" id="searchInput" placeholder="Search suppliers..." class="form-control">
+    </div>
+    <button class="btn btn-primary" onclick="openSupplierModal()">
+      <i class="fas fa-plus"></i> Add Supplier
+    </button>
+  </div>
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Supplier Name</th>
+          <th>Contact Person</th>
+          <th>Phone</th>
+          <th>Email</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="suppliersTable">
+        <tr><td colspan="6" class="text-center"><div class="spinner"></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Supplier Modal -->
+<div class="modal-overlay" id="supplierModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="supplierModalTitle">Add Supplier</h3>
+      <button class="modal-close" onclick="closeSupplierModal()">&times;</button>
+    </div>
+    <form id="supplierForm">
+      <input type="hidden" id="supplierId">
+
+      <div class="form-group">
+        <label class="form-label">Supplier Name *</label>
+        <input type="text" id="name" class="form-control" required>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Contact Person</label>
+          <input type="text" id="contactPerson" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone</label>
+          <input type="text" id="phone" class="form-control">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" id="email" class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Address</label>
+        <textarea id="address" class="form-control textarea" rows="2"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea id="notes" class="form-control textarea" rows="2"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select id="isActive" class="form-control">
+          <option value="true">Active</option>
+          <option value="false">Inactive</option>
+        </select>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeSupplierModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  let suppliers = [];
+
+  document.addEventListener('DOMContentLoaded', function() {
+    loadSuppliers();
+    document.getElementById('supplierForm').addEventListener('submit', handleSubmit);
+    document.getElementById('searchInput').addEventListener('input', filterSuppliers);
+  });
+
+  async function loadSuppliers() {
+    try {
+      const response = await fetch('/api/suppliers');
+      const result = await response.json();
+      if (result.success) {
+        suppliers = result.data;
+        renderSuppliers();
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  }
+
+  function renderSuppliers() {
+    const tbody = document.getElementById('suppliersTable');
+    const search = document.getElementById('searchInput').value.toLowerCase();
+
+    let filtered = suppliers.filter(s => {
+      return !search || s.name?.toLowerCase().includes(search) || s.contactPerson?.toLowerCase().includes(search);
+    });
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center">No suppliers found</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(s => `
+      <tr>
+        <td><strong>${s.name}</strong></td>
+        <td>${s.contactPerson || '-'}</td>
+        <td>${s.phone || '-'}</td>
+        <td>${s.email || '-'}</td>
+        <td><span class="badge ${s.isActive ? 'badge-success' : 'badge-secondary'}">${s.isActive ? 'Active' : 'Inactive'}</span></td>
+        <td>
+          <div class="action-buttons">
+            <button class="btn btn-sm btn-primary" onclick="editSupplier(${s.id})"><i class="fas fa-edit"></i></button>
+            <button class="btn btn-sm btn-danger" onclick="deleteSupplier(${s.id})"><i class="fas fa-trash"></i></button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function filterSuppliers() {
+    renderSuppliers();
+  }
+
+  function openSupplierModal() {
+    document.getElementById('supplierModalTitle').textContent = 'Add Supplier';
+    document.getElementById('supplierForm').reset();
+    document.getElementById('supplierId').value = '';
+    document.getElementById('supplierModal').classList.add('active');
+  }
+
+  function closeSupplierModal() {
+    document.getElementById('supplierModal').classList.remove('active');
+  }
+
+  function editSupplier(id) {
+    const supplier = suppliers.find(s => s.id === id);
+    if (!supplier) return;
+
+    document.getElementById('supplierModalTitle').textContent = 'Edit Supplier';
+    document.getElementById('supplierId').value = id;
+    document.getElementById('name').value = supplier.name;
+    document.getElementById('contactPerson').value = supplier.contactPerson || '';
+    document.getElementById('phone').value = supplier.phone || '';
+    document.getElementById('email').value = supplier.email || '';
+    document.getElementById('address').value = supplier.address || '';
+    document.getElementById('notes').value = supplier.notes || '';
+    document.getElementById('isActive').value = supplier.isActive.toString();
+
+    document.getElementById('supplierModal').classList.add('active');
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+
+    const id = document.getElementById('supplierId').value;
+    const data = {
+      name: document.getElementById('name').value,
+      contactPerson: document.getElementById('contactPerson').value,
+      phone: document.getElementById('phone').value,
+      email: document.getElementById('email').value,
+      address: document.getElementById('address').value,
+      notes: document.getElementById('notes').value,
+      isActive: document.getElementById('isActive').value === 'true',
+    };
+
+    try {
+      const url = id ? `/api/suppliers/${id}` : '/api/suppliers';
+      const method = id ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        alert(result.message);
+        closeSupplierModal();
+        loadSuppliers();
+      } else {
+        alert(result.message || 'Failed to save');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred');
+    }
+  }
+
+  async function deleteSupplier(id) {
+    if (!confirm('Delete this supplier?')) return;
+
+    try {
+      const response = await fetch(`/api/suppliers/${id}`, { method: 'DELETE' });
+      const result = await response.json();
+      if (result.success) {
+        loadSuppliers();
+      } else {
+        alert(result.message || 'Failed to delete');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred');
+    }
+  }
+</script>

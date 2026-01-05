@@ -1,0 +1,400 @@
+<div class="page-header">
+  <h2><i class="fas fa-hospital"></i> Admissions</h2>
+  <p>Manage patient admissions, confinements, and discharge records</p>
+</div>
+
+<!-- Stats Cards -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">Total Admissions</div>
+    <div class="stat-value" id="totalAdmissions">0</div>
+  </div>
+  <div class="stat-card" style="border-left-color: var(--light-green);">
+    <div class="stat-label">Currently Admitted</div>
+    <div class="stat-value" id="ongoingAdmissions">0</div>
+  </div>
+  <div class="stat-card warning">
+    <div class="stat-label">For Follow-up</div>
+    <div class="stat-value" id="followUpAdmissions">0</div>
+  </div>
+  <div class="stat-card success">
+    <div class="stat-label">Discharged</div>
+    <div class="stat-value" id="completedAdmissions">0</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="search-bar" style="margin: 0; flex: 1;">
+      <input type="text" id="searchInput" placeholder="Search patient or owner..." class="form-control">
+      <select id="statusFilter" class="form-control" style="max-width: 150px;">
+        <option value="">All Status</option>
+        <option value="Ongoing">Ongoing</option>
+        <option value="Completed">Discharged</option>
+        <option value="For Follow-up">For Follow-up</option>
+      </select>
+      <select id="typeFilter" class="form-control" style="max-width: 180px;">
+        <option value="">All Types</option>
+        <option value="Infectious">Infectious</option>
+        <option value="Non-Infectious">Non-Infectious</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="openAdmissionModal()">
+      <i class="fas fa-plus"></i> New Admission
+    </button>
+  </div>
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Patient</th>
+          <th>Owner</th>
+          <th>Type</th>
+          <th>Admitted</th>
+          <th>Reason</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="admissionsTable">
+        <tr><td colspan="7" class="text-center"><div class="spinner"></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Admission Modal -->
+<div class="modal-overlay" id="admissionModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="admissionModalTitle">New Admission</h3>
+      <button class="modal-close" onclick="closeAdmissionModal()">&times;</button>
+    </div>
+    <form id="admissionForm">
+      <input type="hidden" id="admissionId">
+
+      <div class="form-group">
+        <label class="form-label">Patient *</label>
+        <select id="patientId" class="form-control" required>
+          <option value="">Select Patient</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Admission Type *</label>
+          <select id="admissionType" class="form-control" required>
+            <option value="Non-Infectious">Non-Infectious</option>
+            <option value="Infectious">Infectious</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Admission Date</label>
+          <input type="datetime-local" id="admissionDate" class="form-control">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Reason for Admission *</label>
+        <textarea id="reason" class="form-control textarea" rows="3" required placeholder="Enter reason for admission..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select id="status" class="form-control">
+          <option value="Ongoing">Ongoing</option>
+          <option value="Completed">Discharged</option>
+          <option value="For Follow-up">For Follow-up</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea id="notes" class="form-control textarea" rows="2" placeholder="Additional notes..."></textarea>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeAdmissionModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- View Admission Details Modal -->
+<div class="modal-overlay" id="viewModal">
+  <div class="modal" style="max-width: 800px;">
+    <div class="modal-header">
+      <h3>Admission Details</h3>
+      <button class="modal-close" onclick="closeViewModal()">&times;</button>
+    </div>
+    <div id="viewModalContent"></div>
+  </div>
+</div>
+
+<script>
+  let admissions = [];
+  let patients = [];
+
+  document.addEventListener('DOMContentLoaded', function() {
+    loadPatients();
+    loadStats();
+    loadAdmissions();
+
+    document.getElementById('admissionForm').addEventListener('submit', handleSubmit);
+    document.getElementById('searchInput').addEventListener('input', filterAdmissions);
+    document.getElementById('statusFilter').addEventListener('change', filterAdmissions);
+    document.getElementById('typeFilter').addEventListener('change', filterAdmissions);
+  });
+
+  async function loadStats() {
+    try {
+      const response = await fetch('/api/admissions/stats');
+      const result = await response.json();
+      if (result.success) {
+        document.getElementById('totalAdmissions').textContent = result.data.total;
+        document.getElementById('ongoingAdmissions').textContent = result.data.ongoing;
+        document.getElementById('followUpAdmissions').textContent = result.data.forFollowUp;
+        document.getElementById('completedAdmissions').textContent = result.data.completed;
+      }
+    } catch (error) {
+      console.error('Error loading stats:', error);
+    }
+  }
+
+  async function loadPatients() {
+    try {
+      const response = await fetch('/api/patients');
+      const result = await response.json();
+      if (result.success) {
+        patients = result.data;
+        const select = document.getElementById('patientId');
+        select.innerHTML = '<option value="">Select Patient</option>';
+        patients.forEach(p => {
+          select.innerHTML += `<option value="${p.id}">${p.name} (${p.species}) - ${p.client?.name || 'Unknown'}</option>`;
+        });
+      }
+    } catch (error) {
+      console.error('Error loading patients:', error);
+    }
+  }
+
+  async function loadAdmissions() {
+    try {
+      const response = await fetch('/api/admissions');
+      const result = await response.json();
+      if (result.success) {
+        admissions = result.data;
+        renderAdmissions();
+      }
+    } catch (error) {
+      console.error('Error loading admissions:', error);
+    }
+  }
+
+  function renderAdmissions() {
+    const tbody = document.getElementById('admissionsTable');
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+    const typeFilter = document.getElementById('typeFilter').value;
+
+    let filtered = admissions.filter(a => {
+      const matchSearch = !search ||
+        a.patient?.name?.toLowerCase().includes(search) ||
+        a.patient?.client?.name?.toLowerCase().includes(search);
+      const matchStatus = !statusFilter || a.status === statusFilter;
+      const matchType = !typeFilter || a.admissionType === typeFilter;
+      return matchSearch && matchStatus && matchType;
+    });
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center">No admissions found</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(a => `
+      <tr>
+        <td>
+          <strong>${a.patient?.name || 'Unknown'}</strong><br>
+          <small>${a.patient?.species || ''} ${a.patient?.breed ? '- ' + a.patient.breed : ''}</small>
+        </td>
+        <td>${a.patient?.client?.name || 'Unknown'}<br><small>${a.patient?.client?.phone || ''}</small></td>
+        <td><span class="badge ${a.admissionType === 'Infectious' ? 'badge-danger' : 'badge-info'}">${a.admissionType}</span></td>
+        <td>${new Date(a.admissionDate).toLocaleDateString()}</td>
+        <td>${a.reason?.substring(0, 50)}${a.reason?.length > 50 ? '...' : ''}</td>
+        <td><span class="badge ${a.status === 'Completed' ? 'badge-success' : a.status === 'For Follow-up' ? 'badge-warning' : 'badge-info'}">${a.status === 'Completed' ? 'Discharged' : a.status}</span></td>
+        <td>
+          <div class="action-buttons">
+            <button class="btn btn-sm btn-secondary" onclick="viewAdmission(${a.id})"><i class="fas fa-eye"></i></button>
+            <button class="btn btn-sm btn-primary" onclick="editAdmission(${a.id})"><i class="fas fa-edit"></i></button>
+            ${a.status === 'Ongoing' ? `<button class="btn btn-sm btn-success" onclick="dischargePatient(${a.id})"><i class="fas fa-sign-out-alt"></i></button>` : ''}
+            <button class="btn btn-sm btn-danger" onclick="deleteAdmission(${a.id})"><i class="fas fa-trash"></i></button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function filterAdmissions() {
+    renderAdmissions();
+  }
+
+  function openAdmissionModal() {
+    document.getElementById('admissionModalTitle').textContent = 'New Admission';
+    document.getElementById('admissionForm').reset();
+    document.getElementById('admissionId').value = '';
+    document.getElementById('admissionDate').value = new Date().toISOString().slice(0, 16);
+    document.getElementById('admissionModal').classList.add('active');
+  }
+
+  function closeAdmissionModal() {
+    document.getElementById('admissionModal').classList.remove('active');
+  }
+
+  async function editAdmission(id) {
+    const admission = admissions.find(a => a.id === id);
+    if (!admission) return;
+
+    document.getElementById('admissionModalTitle').textContent = 'Edit Admission';
+    document.getElementById('admissionId').value = id;
+    document.getElementById('patientId').value = admission.patientId;
+    document.getElementById('admissionType').value = admission.admissionType;
+    document.getElementById('admissionDate').value = admission.admissionDate?.slice(0, 16);
+    document.getElementById('reason').value = admission.reason || '';
+    document.getElementById('status').value = admission.status;
+    document.getElementById('notes').value = admission.notes || '';
+
+    document.getElementById('admissionModal').classList.add('active');
+  }
+
+  async function viewAdmission(id) {
+    const admission = admissions.find(a => a.id === id);
+    if (!admission) return;
+
+    let html = `
+      <div class="patient-info">
+        <div class="patient-avatar"><i class="fas fa-paw"></i></div>
+        <div class="patient-details">
+          <h4>${admission.patient?.name || 'Unknown'}</h4>
+          <p>${admission.patient?.species || ''} ${admission.patient?.breed ? '- ' + admission.patient.breed : ''}</p>
+          <p>Owner: ${admission.patient?.client?.name || 'Unknown'} | Phone: ${admission.patient?.client?.phone || 'N/A'}</p>
+        </div>
+      </div>
+
+      <div class="form-row mt-2">
+        <div><strong>Type:</strong> <span class="badge ${admission.admissionType === 'Infectious' ? 'badge-danger' : 'badge-info'}">${admission.admissionType}</span></div>
+        <div><strong>Status:</strong> <span class="badge ${admission.status === 'Completed' ? 'badge-success' : 'badge-info'}">${admission.status}</span></div>
+      </div>
+
+      <div class="form-row mt-2">
+        <div><strong>Admitted:</strong> ${new Date(admission.admissionDate).toLocaleString()}</div>
+        ${admission.dischargeDate ? `<div><strong>Discharged:</strong> ${new Date(admission.dischargeDate).toLocaleString()}</div>` : ''}
+      </div>
+
+      <div class="mt-2"><strong>Reason:</strong> ${admission.reason || 'N/A'}</div>
+      ${admission.notes ? `<div class="mt-2"><strong>Notes:</strong> ${admission.notes}</div>` : ''}
+
+      ${admission.consultations?.length > 0 ? `
+        <h4 class="mt-3">Consultations (${admission.consultations.length})</h4>
+        ${admission.consultations.map(c => `
+          <div class="schedule-item">
+            <div class="schedule-time">${new Date(c.consultationDate).toLocaleDateString()}</div>
+            <div class="schedule-details">
+              <p><strong>Doctor:</strong> ${c.doctor?.fullName || 'Unknown'}</p>
+              ${c.diagnosis ? `<p><strong>Diagnosis:</strong> ${c.diagnosis}</p>` : ''}
+            </div>
+          </div>
+        `).join('')}
+      ` : ''}
+    `;
+
+    document.getElementById('viewModalContent').innerHTML = html;
+    document.getElementById('viewModal').classList.add('active');
+  }
+
+  function closeViewModal() {
+    document.getElementById('viewModal').classList.remove('active');
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+
+    const id = document.getElementById('admissionId').value;
+    const data = {
+      patientId: document.getElementById('patientId').value,
+      admissionType: document.getElementById('admissionType').value,
+      admissionDate: document.getElementById('admissionDate').value,
+      reason: document.getElementById('reason').value,
+      status: document.getElementById('status').value,
+      notes: document.getElementById('notes').value,
+    };
+
+    try {
+      const url = id ? `/api/admissions/${id}` : '/api/admissions';
+      const method = id ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        alert(result.message);
+        closeAdmissionModal();
+        loadStats();
+        loadAdmissions();
+      } else {
+        alert(result.message || 'Failed to save admission');
+      }
+    } catch (error) {
+      console.error('Error saving admission:', error);
+      alert('An error occurred');
+    }
+  }
+
+  async function dischargePatient(id) {
+    if (!confirm('Discharge this patient?')) return;
+
+    try {
+      const response = await fetch(`/api/admissions/${id}/discharge`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        loadStats();
+        loadAdmissions();
+      } else {
+        alert(result.message || 'Failed to discharge patient');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred');
+    }
+  }
+
+  async function deleteAdmission(id) {
+    if (!confirm('Delete this admission record?')) return;
+
+    try {
+      const response = await fetch(`/api/admissions/${id}`, {
+        method: 'DELETE',
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        loadStats();
+        loadAdmissions();
+      } else {
+        alert(result.message || 'Failed to delete');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred');
+    }
+  }
+</script>

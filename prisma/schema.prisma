@@ -14,9 +14,9 @@ datasource db {
 model Client {
   id              Int           @id @default(autoincrement())
   name            String
-  phone           String?
+  phone           String?       // Contact number (CP number)
   email           String?       @unique  // Unique for customer authentication
-  address         String?       @db.Text
+  address         String?       @db.Text  // Patient address
   emailVerified   Boolean       @default(false)
   emailVerifiedAt DateTime?
   createdAt       DateTime      @default(now())
@@ -30,6 +30,7 @@ model Client {
   // Relations
   patients     Patient[]     @relation("ClientPatients")
   invoices     Invoice[]     @relation("ClientInvoices")
+  creditDeposits CreditDeposit[] @relation("ClientCreditDeposits")
 
   @@index([email])
   @@map("clients")
@@ -41,11 +42,17 @@ model Patient {
   name         String
   species      String        // e.g., Dog, Cat, Bird
   breed        String?
+  gender       String?       // Male, Female
   birthDate    DateTime?
   weight       Float?        // Weight in kg
+  color        String?       // Color/Markings
+  phone        String?       // Contact number (CP)
+  address      String?       // Address
   photoUrl     String?       // Pet profile picture URL
   qrCode       String?       @unique
   notes        String?       @db.Text
+  treatment    String?       @db.Text // TX - Treatment history
+  prescription String?       @db.Text // RX - Prescription history
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
@@ -58,6 +65,8 @@ model Patient {
   diagnoses    Diagnosis[]
   admissions   Admission[]
   groomings    Grooming[]
+  consultations Consultation[] @relation("PatientConsultations")
+  serviceRecords ServiceRecord[] @relation("PatientServiceRecords")
 
   @@index([clientId])
   @@index([qrCode])
@@ -104,11 +113,18 @@ model Item {
   quantity     Int           @default(0)
   minQuantity  Int           @default(5) // Threshold for low stock alert
   price        Float
+  sku          String?       @unique // Stock keeping unit
+  category     String?       // Category for grouping
+  unit         String?       // Unit of measurement (pcs, ml, kg, etc.)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
   // Relations
   invoiceItems InvoiceItem[]
+  purchaseOrderItems PurchaseOrderItem[]
+  receivingReportItems ReceivingReportItem[]
+  supplierPrices SupplierItemPrice[]
+  walkInInvoiceItems WalkInInvoiceItem[]
 
   @@map("items")
 }
@@ -200,6 +216,14 @@ model User {
   payments        Payment[]     @relation("ReceivedByUser")
   admissions      Admission[]   @relation("AdmittedByUser")
   auditLogs       AuditLog[]    @relation("AuditLogUser")
+  consultations   Consultation[] @relation("DoctorConsultations")
+  purchaseOrders  PurchaseOrder[] @relation("PurchaseOrderCreatedBy")
+  receivingReports ReceivingReport[] @relation("ReceivingReportReceivedBy")
+  expenses        Expense[]     @relation("ExpenseCreatedBy")
+  walkInInvoices  WalkInInvoice[] @relation("WalkInInvoicePreparedBy")
+  creditDeposits  CreditDeposit[] @relation("CreditDepositReceivedBy")
+  employee        Employee?     @relation("EmployeeUser")
+  serviceRecords  ServiceRecord[] @relation("ServicePerformedBy")
 
   @@index([roleId])
   @@index([email])
@@ -305,6 +329,7 @@ model Admission {
   admissionDate  DateTime @default(now())
   dischargeDate  DateTime?
   reason         String   @db.Text
+  status         String   @default("Ongoing") // Ongoing, Completed, For Follow-up
   notes          String?  @db.Text
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -317,9 +342,11 @@ model Admission {
   patient        Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
   admittedBy     User         @relation("AdmittedByUser", fields: [admittedById], references: [id])
   confinements   Confinement[]
+  consultations  Consultation[] @relation("AdmissionConsultations")
 
   @@index([patientId])
   @@index([admittedById])
+  @@index([status])
   @@map("admissions")
 }
 
@@ -431,4 +458,399 @@ model AuditLog {
   @@index([createdAt])
   @@index([status])
   @@map("audit_logs")
+}
+
+// ==================== CONSULTATION & FOLLOW-UP MODELS ====================
+
+// Consultation Model - Tracks individual consultations/visits for patients
+model Consultation {
+  id               Int       @id @default(autoincrement())
+  consultationDate DateTime  @default(now())
+  diagnosis        String?   @db.Text
+  treatment        String?   @db.Text // TX - Treatment notes
+  prescription     String?   @db.Text // RX - Prescription notes
+  notes            String?   @db.Text
+  nextCheckUpDate  DateTime?
+  status           String    @default("Ongoing") // Ongoing, Completed, For Follow-up
+  weight           Float?    // Weight at time of consultation
+  temperature      Float?    // Temperature reading
+  vitalSigns       String?   @db.Text // JSON for additional vital signs
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Foreign Keys
+  patientId        Int
+  doctorId         Int
+  admissionId      Int?      // Optional link to admission if patient is admitted
+
+  // Relations
+  patient          Patient    @relation("PatientConsultations", fields: [patientId], references: [id], onDelete: Cascade)
+  doctor           User       @relation("DoctorConsultations", fields: [doctorId], references: [id])
+  admission        Admission? @relation("AdmissionConsultations", fields: [admissionId], references: [id])
+
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([admissionId])
+  @@index([consultationDate])
+  @@index([status])
+  @@index([nextCheckUpDate])
+  @@map("consultations")
+}
+
+// ==================== INVENTORY & SUPPLIER MODELS ====================
+
+// Supplier Model
+model Supplier {
+  id              Int      @id @default(autoincrement())
+  name            String
+  contactPerson   String?
+  phone           String?
+  email           String?
+  address         String?  @db.Text
+  notes           String?  @db.Text
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  purchaseOrders  PurchaseOrder[]
+  receivingReports ReceivingReport[]
+  itemPrices      SupplierItemPrice[]
+
+  @@map("suppliers")
+}
+
+// Supplier Item Price - Track prices from different suppliers for price comparison
+model SupplierItemPrice {
+  id              Int      @id @default(autoincrement())
+  price           Float
+  lastUpdated     DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Foreign Keys
+  supplierId      Int
+  itemId          Int
+
+  // Relations
+  supplier        Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  item            Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([supplierId, itemId])
+  @@index([supplierId])
+  @@index([itemId])
+  @@map("supplier_item_prices")
+}
+
+// Purchase Order Model
+model PurchaseOrder {
+  id              Int       @id @default(autoincrement())
+  poNumber        String    @unique
+  orderDate       DateTime  @default(now())
+  expectedDate    DateTime?
+  status          String    @default("Pending") // Pending, Approved, Ordered, Partially Received, Received, Cancelled
+  totalAmount     Float     @default(0)
+  notes           String?   @db.Text
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Foreign Keys
+  supplierId      Int
+  createdById     Int
+
+  // Relations
+  supplier        Supplier          @relation(fields: [supplierId], references: [id])
+  createdBy       User              @relation("PurchaseOrderCreatedBy", fields: [createdById], references: [id])
+  items           PurchaseOrderItem[]
+  receivingReports ReceivingReport[]
+
+  @@index([supplierId])
+  @@index([createdById])
+  @@index([orderDate])
+  @@index([status])
+  @@map("purchase_orders")
+}
+
+// Purchase Order Item
+model PurchaseOrderItem {
+  id              Int      @id @default(autoincrement())
+  quantity        Int
+  unitPrice       Float
+  subtotal        Float
+  receivedQty     Int      @default(0)
+
+  // Foreign Keys
+  purchaseOrderId Int
+  itemId          Int
+
+  // Relations
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  item            Item          @relation(fields: [itemId], references: [id])
+
+  @@index([purchaseOrderId])
+  @@index([itemId])
+  @@map("purchase_order_items")
+}
+
+// Receiving Report Model
+model ReceivingReport {
+  id              Int      @id @default(autoincrement())
+  rrNumber        String   @unique
+  receiveDate     DateTime @default(now())
+  notes           String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Foreign Keys
+  purchaseOrderId Int?
+  supplierId      Int
+  receivedById    Int
+
+  // Relations
+  purchaseOrder   PurchaseOrder?      @relation(fields: [purchaseOrderId], references: [id])
+  supplier        Supplier            @relation(fields: [supplierId], references: [id])
+  receivedBy      User                @relation("ReceivingReportReceivedBy", fields: [receivedById], references: [id])
+  items           ReceivingReportItem[]
+
+  @@index([purchaseOrderId])
+  @@index([supplierId])
+  @@index([receivedById])
+  @@index([receiveDate])
+  @@map("receiving_reports")
+}
+
+// Receiving Report Item
+model ReceivingReportItem {
+  id                Int      @id @default(autoincrement())
+  quantityReceived  Int
+  quantityRejected  Int      @default(0)
+  unitPrice         Float
+  subtotal          Float
+  notes             String?  @db.Text
+
+  // Foreign Keys
+  receivingReportId Int
+  itemId            Int
+
+  // Relations
+  receivingReport   ReceivingReport @relation(fields: [receivingReportId], references: [id], onDelete: Cascade)
+  item              Item            @relation(fields: [itemId], references: [id])
+
+  @@index([receivingReportId])
+  @@index([itemId])
+  @@map("receiving_report_items")
+}
+
+// ==================== SALES & EXPENSE MODELS ====================
+
+// Expense Model
+model Expense {
+  id              Int      @id @default(autoincrement())
+  expenseNumber   String   @unique
+  date            DateTime @default(now())
+  category        String   // Utilities, Supplies, Rent, Salaries, Equipment, Other
+  description     String   @db.Text
+  amount          Float
+  paymentMethod   String?  // Cash, GCash, Bank Transfer, Check
+  reference       String?  // Receipt/reference number
+  notes           String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Foreign Keys
+  createdById     Int
+
+  // Relations
+  createdBy       User     @relation("ExpenseCreatedBy", fields: [createdById], references: [id])
+
+  @@index([createdById])
+  @@index([date])
+  @@index([category])
+  @@map("expenses")
+}
+
+// Walk-in Invoice Model (For customers without Client record)
+model WalkInInvoice {
+  id              Int      @id @default(autoincrement())
+  invoiceNumber   String   @unique
+  date            DateTime @default(now())
+  customerName    String
+  customerPhone   String?
+  customerAddress String?  @db.Text
+  petName         String?
+  petSpecies      String?
+  totalAmount     Float    @default(0)
+  status          String   @default("Unpaid") // Unpaid, Paid
+  paymentMethod   String?  // Cash, GCash, Mixed
+  cashAmount      Float    @default(0)
+  gcashAmount     Float    @default(0)
+  gcashReference  String?
+  notes           String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Foreign Keys
+  preparedById    Int
+
+  // Relations
+  preparedBy      User              @relation("WalkInInvoicePreparedBy", fields: [preparedById], references: [id])
+  items           WalkInInvoiceItem[]
+
+  @@index([preparedById])
+  @@index([date])
+  @@index([status])
+  @@map("walkin_invoices")
+}
+
+// Walk-in Invoice Item
+model WalkInInvoiceItem {
+  id              Int      @id @default(autoincrement())
+  quantity        Int
+  priceEach       Float
+  subtotal        Float
+
+  // Foreign Keys
+  walkInInvoiceId Int
+  itemId          Int
+
+  // Relations
+  walkInInvoice   WalkInInvoice @relation(fields: [walkInInvoiceId], references: [id], onDelete: Cascade)
+  item            Item          @relation(fields: [itemId], references: [id])
+
+  @@index([walkInInvoiceId])
+  @@index([itemId])
+  @@map("walkin_invoice_items")
+}
+
+// Credit Deposit Model - Track deposits/credits received
+model CreditDeposit {
+  id              Int      @id @default(autoincrement())
+  depositNumber   String   @unique
+  date            DateTime @default(now())
+  amount          Float
+  reference       String?  // Reference number
+  notes           String?  @db.Text
+  status          String   @default("Pending") // Pending, Applied, Refunded
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Foreign Keys
+  clientId        Int
+  receivedById    Int
+  invoiceId       Int?     // Invoice this credit was applied to
+
+  // Relations
+  client          Client   @relation("ClientCreditDeposits", fields: [clientId], references: [id])
+  receivedBy      User     @relation("CreditDepositReceivedBy", fields: [receivedById], references: [id])
+
+  @@index([clientId])
+  @@index([receivedById])
+  @@index([date])
+  @@index([status])
+  @@map("credit_deposits")
+}
+
+// ==================== HR MODELS ====================
+
+// Employee Model - Extends user information for HR management
+model Employee {
+  id                Int       @id @default(autoincrement())
+  employeeNumber    String    @unique
+  dateHired         DateTime  @default(now())
+  dateTerminated    DateTime?
+  position          String
+  department        String?
+  salary            Float?
+  salaryType        String    @default("Monthly") // Monthly, Daily, Hourly
+  sssNumber         String?
+  philhealthNumber  String?
+  pagibigNumber     String?
+  tinNumber         String?
+  emergencyContact  String?
+  emergencyPhone    String?
+  bankAccount       String?
+  bankName          String?
+  notes             String?   @db.Text
+  status            String    @default("Active") // Active, On Leave, Terminated
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Foreign Keys
+  userId            Int       @unique
+
+  // Relations
+  user              User      @relation("EmployeeUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@map("employees")
+}
+
+// ==================== SYSTEM MODELS ====================
+
+// Company Information Model
+model CompanyInfo {
+  id              Int      @id @default(autoincrement())
+  name            String
+  address         String?  @db.Text
+  phone           String?
+  email           String?
+  website         String?
+  tinNumber       String?
+  logo            String?  // Logo URL
+  tagline         String?
+  operatingHours  String?  @db.Text // JSON for operating hours
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("company_info")
+}
+
+// Service Model - Medical/Clinic Services (separate from inventory items)
+model Service {
+  id              Int      @id @default(autoincrement())
+  name            String
+  description     String?  @db.Text
+  category        String?  // Vaccination, Surgery, Grooming, Checkup, Laboratory, etc.
+  price           Float
+  duration        Int?     // Duration in minutes
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  serviceRecords  ServiceRecord[]
+
+  @@map("services")
+}
+
+// Service Record - Track services rendered to patients
+model ServiceRecord {
+  id              Int      @id @default(autoincrement())
+  date            DateTime @default(now())
+  quantity        Int      @default(1)
+  price           Float
+  discount        Float    @default(0)
+  total           Float
+  notes           String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Foreign Keys
+  serviceId       Int
+  patientId       Int
+  performedById   Int
+  invoiceId       Int?
+
+  // Relations
+  service         Service  @relation(fields: [serviceId], references: [id])
+  patient         Patient  @relation("PatientServiceRecords", fields: [patientId], references: [id], onDelete: Cascade)
+  performedBy     User     @relation("ServicePerformedBy", fields: [performedById], references: [id])
+
+  @@index([serviceId])
+  @@index([patientId])
+  @@index([performedById])
+  @@index([invoiceId])
+  @@index([date])
+  @@map("service_records")
 }

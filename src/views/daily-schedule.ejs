@@ -1,0 +1,168 @@
+<div class="page-header">
+  <h2><i class="fas fa-clock"></i> Daily Schedule</h2>
+  <p>View today's appointments, consultations, and follow-up visits</p>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="filter-bar" style="margin: 0;">
+      <div class="filter-group">
+        <label>Date:</label>
+        <input type="date" id="scheduleDate" class="form-control" onchange="loadSchedule()">
+      </div>
+    </div>
+    <button class="btn btn-secondary" onclick="goToToday()">
+      <i class="fas fa-calendar-day"></i> Today
+    </button>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Appointments</div>
+      <div class="stat-value" id="appointmentCount">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Consultations</div>
+      <div class="stat-value" id="consultationCount">0</div>
+    </div>
+    <div class="stat-card warning">
+      <div class="stat-label">Follow-ups</div>
+      <div class="stat-value" id="followupCount">0</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('all')">All</button>
+    <button class="tab" onclick="switchTab('appointments')">Appointments</button>
+    <button class="tab" onclick="switchTab('consultations')">Consultations</button>
+    <button class="tab" onclick="switchTab('followups')">Follow-ups</button>
+  </div>
+
+  <div id="scheduleContent">
+    <div class="spinner"></div>
+  </div>
+</div>
+
+<script>
+  let scheduleData = { appointments: [], consultations: [], followUps: [] };
+  let currentTab = 'all';
+
+  document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('scheduleDate').value = new Date().toISOString().split('T')[0];
+    loadSchedule();
+  });
+
+  async function loadSchedule() {
+    const date = document.getElementById('scheduleDate').value;
+
+    try {
+      const response = await fetch(`/api/system/daily-schedule?date=${date}`);
+      const result = await response.json();
+      if (result.success) {
+        scheduleData = result.data;
+        updateCounts();
+        renderSchedule();
+      }
+    } catch (error) {
+      console.error('Error loading schedule:', error);
+      document.getElementById('scheduleContent').innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h3>Error loading schedule</h3></div>';
+    }
+  }
+
+  function updateCounts() {
+    document.getElementById('appointmentCount').textContent = scheduleData.appointments?.length || 0;
+    document.getElementById('consultationCount').textContent = scheduleData.consultations?.length || 0;
+    document.getElementById('followupCount').textContent = scheduleData.followUps?.length || 0;
+  }
+
+  function renderSchedule() {
+    const container = document.getElementById('scheduleContent');
+    let items = [];
+
+    if (currentTab === 'all' || currentTab === 'appointments') {
+      scheduleData.appointments?.forEach(a => {
+        items.push({
+          time: new Date(a.dateTime),
+          type: 'appointment',
+          data: a
+        });
+      });
+    }
+
+    if (currentTab === 'all' || currentTab === 'consultations') {
+      scheduleData.consultations?.forEach(c => {
+        items.push({
+          time: new Date(c.consultationDate),
+          type: 'consultation',
+          data: c
+        });
+      });
+    }
+
+    if (currentTab === 'all' || currentTab === 'followups') {
+      scheduleData.followUps?.forEach(f => {
+        items.push({
+          time: new Date(f.nextCheckUpDate),
+          type: 'followup',
+          data: f
+        });
+      });
+    }
+
+    items.sort((a, b) => a.time - b.time);
+
+    if (items.length === 0) {
+      container.innerHTML = '<div class="empty-state"><i class="fas fa-calendar-day"></i><h3>No scheduled items</h3><p>There are no appointments, consultations, or follow-ups for this day.</p></div>';
+      return;
+    }
+
+    container.innerHTML = '<div class="schedule-timeline">' + items.map(item => {
+      const typeColors = {
+        appointment: 'var(--light-green)',
+        consultation: 'var(--primary-green)',
+        followup: 'var(--warning)'
+      };
+      const typeLabels = {
+        appointment: 'Appointment',
+        consultation: 'Consultation',
+        followup: 'Follow-up'
+      };
+      const typeIcons = {
+        appointment: 'fa-calendar-check',
+        consultation: 'fa-stethoscope',
+        followup: 'fa-redo'
+      };
+
+      return `
+        <div class="schedule-item" style="border-left-color: ${typeColors[item.type]}">
+          <div class="schedule-time">${item.time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+          <div class="schedule-details">
+            <div class="flex-between">
+              <h4><i class="fas ${typeIcons[item.type]}" style="color: ${typeColors[item.type]}"></i> ${item.data.patient?.name || 'Unknown Patient'}</h4>
+              <span class="badge" style="background: ${typeColors[item.type]}; color: ${item.type === 'followup' ? 'var(--text-dark)' : 'white'}">${typeLabels[item.type]}</span>
+            </div>
+            <p>
+              ${item.data.patient?.species || ''} ${item.data.patient?.breed ? '- ' + item.data.patient.breed : ''}
+              | Owner: ${item.data.patient?.client?.name || 'Unknown'}
+              | Phone: ${item.data.patient?.client?.phone || 'N/A'}
+            </p>
+            ${item.type === 'appointment' ? `<p>Reason: ${item.data.reason || 'N/A'} | Status: <span class="badge badge-${item.data.status === 'Completed' ? 'success' : item.data.status === 'Canceled' ? 'danger' : 'info'}">${item.data.status}</span></p>` : ''}
+            ${item.type === 'consultation' || item.type === 'followup' ? `<p>Doctor: ${item.data.doctor?.fullName || 'Unknown'}</p>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('') + '</div>';
+  }
+
+  function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    renderSchedule();
+  }
+
+  function goToToday() {
+    document.getElementById('scheduleDate').value = new Date().toISOString().split('T')[0];
+    loadSchedule();
+  }
+</script>
