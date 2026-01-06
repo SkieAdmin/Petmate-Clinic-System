@@ -111,7 +111,7 @@ class ConsultationService {
 
   // Create new consultation
   async createConsultation(data) {
-    return await prisma.consultation.create({
+    const consultation = await prisma.consultation.create({
       data: {
         consultationDate: data.consultationDate ? new Date(data.consultationDate) : new Date(),
         diagnosis: data.diagnosis || null,
@@ -139,6 +139,43 @@ class ConsultationService {
             fullName: true,
           },
         },
+      },
+    });
+
+    // Auto-save prescription and treatment to patient's profile
+    if (data.prescription || data.treatment) {
+      await this.updatePatientHistory(parseInt(data.patientId), data.treatment, data.prescription, consultation.consultationDate);
+    }
+
+    return consultation;
+  }
+
+  // Update patient's TX/RX history
+  async updatePatientHistory(patientId, treatment, prescription, date) {
+    const patient = await prisma.patient.findUnique({
+      where: { id: patientId },
+      select: { treatment: true, prescription: true },
+    });
+
+    const dateStr = new Date(date).toLocaleDateString();
+    let newTreatment = patient.treatment || '';
+    let newPrescription = patient.prescription || '';
+
+    if (treatment) {
+      const txEntry = `[${dateStr}] ${treatment}`;
+      newTreatment = newTreatment ? `${txEntry}\n\n${newTreatment}` : txEntry;
+    }
+
+    if (prescription) {
+      const rxEntry = `[${dateStr}] ${prescription}`;
+      newPrescription = newPrescription ? `${rxEntry}\n\n${newPrescription}` : rxEntry;
+    }
+
+    await prisma.patient.update({
+      where: { id: patientId },
+      data: {
+        treatment: newTreatment || null,
+        prescription: newPrescription || null,
       },
     });
   }

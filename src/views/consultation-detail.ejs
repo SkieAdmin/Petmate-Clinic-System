@@ -8,6 +8,7 @@
       <button class="btn btn-secondary" onclick="goBack()"><i class="fas fa-arrow-left"></i> Back</button>
       <button class="btn btn-primary" onclick="editConsultation()"><i class="fas fa-edit"></i> Edit</button>
       <button class="btn btn-success" id="addFollowUpBtn" onclick="addFollowUp()" style="display: none;"><i class="fas fa-plus"></i> Add Follow-up</button>
+      <button class="btn btn-warning" id="printRxBtn" onclick="printPrescription()" style="display: none;"><i class="fas fa-prescription"></i> Print RX</button>
       <button class="btn btn-info" onclick="printConsultation()"><i class="fas fa-print"></i> Print</button>
     </div>
   </div>
@@ -411,6 +412,7 @@
 
     if (c.prescription) {
       document.getElementById('prescription').textContent = c.prescription;
+      document.getElementById('printRxBtn').style.display = 'inline-block';
     } else {
       document.getElementById('prescriptionSection').style.display = 'none';
     }
@@ -521,6 +523,12 @@
 
   function printConsultation() {
     window.print();
+  }
+
+  function printPrescription() {
+    if (consultation) {
+      window.open(`/prescription-print?id=${consultation.id}`, '_blank');
+    }
   }
 
   function goBack() {

@@ -237,6 +237,10 @@ app.get('/consultation-detail', authenticate, (req, res) => {
   res.render('consultation-detail', { title: 'Consultation Details', user: req.user });
 });
 
+app.get('/prescription-print', authenticate, (req, res) => {
+  res.render('prescription-print', { title: 'Print Prescription', layout: false });
+});
+
 // Admin module routes
 app.get('/calendar', authenticate, (req, res) => {
   res.render('calendar', { title: 'Clinic Calendar', user: req.user });

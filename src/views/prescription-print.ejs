@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prescription - Petmate Clinic</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Georgia', serif;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+      background: #fff;
+    }
+
+    .prescription-container {
+      border: 2px solid #2d6a4f;
+      padding: 30px;
+      position: relative;
+    }
+
+    .header {
+      text-align: center;
+      border-bottom: 2px solid #2d6a4f;
+      padding-bottom: 20px;
+      margin-bottom: 20px;
+    }
+
+    .clinic-logo {
+      font-size: 2.5rem;
+      color: #2d6a4f;
+      margin-bottom: 10px;
+    }
+
+    .clinic-name {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: #2d6a4f;
+      margin-bottom: 5px;
+    }
+
+    .clinic-info {
+      font-size: 0.9rem;
+      color: #666;
+      line-height: 1.5;
+    }
+
+    .rx-symbol {
+      position: absolute;
+      top: 100px;
+      left: 30px;
+      font-size: 4rem;
+      font-weight: bold;
+      color: #2d6a4f;
+      opacity: 0.3;
+    }
+
+    .patient-info {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 25px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+
+    .info-item {
+      display: flex;
+      gap: 10px;
+    }
+
+    .info-label {
+      font-weight: bold;
+      color: #333;
+      min-width: 80px;
+    }
+
+    .info-value {
+      color: #555;
+    }
+
+    .prescription-title {
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #2d6a4f;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .prescription-content {
+      min-height: 200px;
+      padding: 20px;
+      border: 1px dashed #ccc;
+      margin-bottom: 25px;
+      white-space: pre-wrap;
+      font-size: 1.1rem;
+      line-height: 1.8;
+    }
+
+    .diagnosis-section {
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-weight: bold;
+      color: #2d6a4f;
+      margin-bottom: 8px;
+      font-size: 1rem;
+    }
+
+    .section-content {
+      padding: 10px 15px;
+      background: #f8f9fa;
+      border-left: 3px solid #2d6a4f;
+      white-space: pre-wrap;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #ddd;
+    }
+
+    .date-section {
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    .signature-section {
+      text-align: center;
+    }
+
+    .signature-line {
+      width: 200px;
+      border-bottom: 1px solid #333;
+      margin-bottom: 5px;
+      padding-top: 50px;
+    }
+
+    .doctor-name {
+      font-weight: bold;
+      color: #333;
+    }
+
+    .doctor-title {
+      font-size: 0.85rem;
+      color: #666;
+    }
+
+    .print-actions {
+      text-align: center;
+      margin-top: 30px;
+      padding: 20px;
+    }
+
+    .btn {
+      padding: 12px 30px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 0 10px;
+    }
+
+    .btn-print {
+      background: #2d6a4f;
+      color: white;
+    }
+
+    .btn-back {
+      background: #6c757d;
+      color: white;
+    }
+
+    @media print {
+      body {
+        padding: 0;
+      }
+
+      .print-actions {
+        display: none;
+      }
+
+      .prescription-container {
+        border: 2px solid #000;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <div class="prescription-container">
+    <div class="header">
+      <div class="clinic-logo"><i class="fas fa-paw"></i></div>
+      <div class="clinic-name" id="clinicName">Petmate Veterinary Clinic</div>
+      <div class="clinic-info" id="clinicInfo">
+        <div id="clinicAddress">Address: Loading...</div>
+        <div id="clinicContact">Contact: Loading...</div>
+      </div>
+    </div>
+
+    <div class="rx-symbol">Rx</div>
+
+    <div class="patient-info">
+      <div class="info-item">
+        <span class="info-label">Patient:</span>
+        <span class="info-value" id="patientName">-</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Species:</span>
+        <span class="info-value" id="patientSpecies">-</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Owner:</span>
+        <span class="info-value" id="ownerName">-</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Weight:</span>
+        <span class="info-value" id="patientWeight">-</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Address:</span>
+        <span class="info-value" id="ownerAddress">-</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Date:</span>
+        <span class="info-value" id="consultDate">-</span>
+      </div>
+    </div>
+
+    <div class="diagnosis-section">
+      <div class="section-title">Diagnosis:</div>
+      <div class="section-content" id="diagnosis">-</div>
+    </div>
+
+    <div class="prescription-title">Prescription</div>
+
+    <div class="prescription-content" id="prescriptionContent">
+      Loading prescription...
+    </div>
+
+    <div class="footer">
+      <div class="date-section">
+        <div>Date Issued: <span id="issueDate">-</span></div>
+        <div id="nextCheckup" style="display: none;">Next Check-up: <span id="nextCheckupDate">-</span></div>
+      </div>
+      <div class="signature-section">
+        <div class="signature-line"></div>
+        <div class="doctor-name" id="doctorName">-</div>
+        <div class="doctor-title">Licensed Veterinarian</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="print-actions">
+    <button class="btn btn-print" onclick="window.print()">
+      <i class="fas fa-print"></i> Print Prescription
+    </button>
+    <button class="btn btn-back" onclick="window.history.back()">
+      <i class="fas fa-arrow-left"></i> Back
+    </button>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const consultationId = urlParams.get('id');
+
+      if (!consultationId) {
+        alert('No consultation ID provided');
+        window.history.back();
+        return;
+      }
+
+      try {
+        // Load consultation data
+        const response = await fetch(`/api/consultations/${consultationId}`);
+        const result = await response.json();
+
+        if (result.success) {
+          const c = result.data;
+
+          // Patient info
+          document.getElementById('patientName').textContent = c.patient?.name || '-';
+          document.getElementById('patientSpecies').textContent = `${c.patient?.species || '-'} / ${c.patient?.breed || 'Unknown'}`;
+          document.getElementById('ownerName').textContent = c.patient?.client?.name || '-';
+          document.getElementById('ownerAddress').textContent = c.patient?.client?.address || c.patient?.address || '-';
+          document.getElementById('patientWeight').textContent = c.weight ? `${c.weight} kg` : (c.patient?.weight ? `${c.patient.weight} kg` : '-');
+
+          // Consultation info
+          document.getElementById('consultDate').textContent = new Date(c.consultationDate).toLocaleDateString();
+          document.getElementById('diagnosis').textContent = c.diagnosis || 'No diagnosis recorded';
+          document.getElementById('prescriptionContent').textContent = c.prescription || 'No prescription';
+          document.getElementById('issueDate').textContent = new Date(c.consultationDate).toLocaleDateString();
+          document.getElementById('doctorName').textContent = `Dr. ${c.doctor?.fullName || 'Unknown'}`;
+
+          // Next checkup
+          if (c.nextCheckUpDate) {
+            document.getElementById('nextCheckup').style.display = 'block';
+            document.getElementById('nextCheckupDate').textContent = new Date(c.nextCheckUpDate).toLocaleDateString();
+          }
+        } else {
+          alert('Failed to load consultation');
+        }
+
+        // Load clinic info
+        const clinicResponse = await fetch('/api/system/company-info');
+        const clinicResult = await clinicResponse.json();
+
+        if (clinicResult.success && clinicResult.data) {
+          const clinic = clinicResult.data;
+          if (clinic.name) document.getElementById('clinicName').textContent = clinic.name;
+          if (clinic.address) document.getElementById('clinicAddress').textContent = `Address: ${clinic.address}`;
+          if (clinic.phone || clinic.email) {
+            document.getElementById('clinicContact').textContent = `Contact: ${clinic.phone || ''} ${clinic.email ? '| ' + clinic.email : ''}`;
+          }
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error loading prescription data');
+      }
+    });
+  </script>
+</body>
+</html>
